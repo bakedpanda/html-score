@@ -121,7 +121,16 @@ PORT=8080 docker compose up -d
 1. In Portainer, go to **Stacks → Add stack**
 2. Choose **Repository** and enter `https://github.com/bakedpanda/html-score`
 3. Set the compose file path to `docker-compose.yml`
-4. Under **Environment variables**, add `PORT=3000` (or whichever port you want)
+4. Under **Environment variables**, set:
+
+| Variable | Example | Purpose |
+|----------|---------|---------|
+| `PORT` | `3000` | Host port |
+| `DATA_DIR` | `/mnt/appdata/html-score/data` | Where state and profiles are saved |
+| `UPLOADS_DIR` | `/mnt/appdata/html-score/uploads` | Where uploaded logos are saved |
+
+> **Important:** always set `DATA_DIR` and `UPLOADS_DIR` to absolute paths on your server. If you leave them unset, Docker will create the folders relative to wherever Portainer clones the repo, which is usually buried inside `/opt/stacks/` and hard to find.
+
 5. Deploy the stack
 
 ---

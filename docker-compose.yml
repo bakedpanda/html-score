@@ -4,6 +4,6 @@ services:
     ports:
       - "${PORT:-3000}:3000"
     volumes:
-      - ./data:/app/data
-      - ./public/uploads:/app/public/uploads
+      - ${DATA_DIR:-./data}:/app/data
+      - ${UPLOADS_DIR:-./public/uploads}:/app/public/uploads
     restart: unless-stopped
