@@ -452,6 +452,15 @@ app.post('/api/profiles/:id/load', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/profiles/import', (req, res) => {
+  const p = req.body;
+  if (!p || !p.data || !p.type) return res.status(400).json({ error: 'Invalid profile' });
+  const id = p.id || Date.now().toString(36);
+  const profile = { ...p, id, createdAt: p.createdAt || new Date().toISOString() };
+  fs.writeFileSync(path.join(PROFILES_DIR, `${id}.json`), JSON.stringify(profile, null, 2));
+  res.json(profile);
+});
+
 app.delete('/api/profiles/:id', (req, res) => {
   const file = path.join(PROFILES_DIR, `${req.params.id}.json`);
   if (fs.existsSync(file)) fs.unlinkSync(file);

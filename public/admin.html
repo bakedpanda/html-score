@@ -1113,7 +1113,11 @@
     <div class="card">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
         Saved Profiles
-        <button class="btn btn-ghost btn-sm" onclick="loadProfileList()">↺ Refresh</button>
+        <div style="display:flex;gap:6px">
+          <input type="file" id="import-profile-input" accept=".json" style="display:none" onchange="importProfile(this)">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-profile-input').click()">Import</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadProfileList()">↺ Refresh</button>
+        </div>
       </div>
       <div class="card-body">
         <div class="profile-list" id="profile-list">
@@ -1942,10 +1946,40 @@ async function loadProfileList() {
       </div>
       <span class="profile-type-badge ${p.type}">${p.type}</span>
       <button class="btn btn-success btn-sm" onclick="loadProfile('${p.id}')">Load</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportProfile('${p.id}')">Export</button>
       <button class="btn btn-danger btn-sm" onclick="deleteProfile('${p.id}', this)">Delete</button>
     `;
     el.appendChild(row);
   });
+}
+
+function exportProfile(id) {
+  fetch('/api/profiles').then(r => r.json()).then(list => {
+    const p = list.find(x => x.id === id);
+    if (!p) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }));
+    a.download = p.name.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+async function importProfile(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  try {
+    const profile = JSON.parse(await file.text());
+    if (!profile.data || !profile.type) { toast('Invalid profile file'); return; }
+    const res = await fetch('/api/profiles/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    });
+    if (res.ok) { toast('Profile imported'); loadProfileList(); }
+    else toast('Import failed');
+  } catch { toast('Invalid profile file'); }
 }
 
 async function loadProfile(id) {
