@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +18,40 @@ const PROFILES_DIR = path.join(__dirname, 'data', 'profiles');
 [path.join(__dirname, 'data'), UPLOADS_DIR, PROFILES_DIR].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
+
+// ── Auth ──────────────────────────────────────────────────────────────
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null;
+const COOKIE_SECRET  = process.env.COOKIE_SECRET  || crypto.randomBytes(32).toString('hex');
+const COOKIE_NAME    = 'sb_auth';
+
+function signValue(val) {
+  return val + '.' + crypto.createHmac('sha256', COOKIE_SECRET).update(val).digest('base64url');
+}
+function verifySignedCookie(signed) {
+  if (!signed) return false;
+  const dot = signed.lastIndexOf('.');
+  if (dot < 1) return false;
+  const val = signed.slice(0, dot);
+  const sig = signed.slice(dot + 1);
+  const expected = crypto.createHmac('sha256', COOKIE_SECRET).update(val).digest('base64url');
+  try {
+    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) && val === 'admin';
+  } catch { return false; }
+}
+function parseCookies(req) {
+  const out = {};
+  (req.headers.cookie || '').split(';').forEach(c => {
+    const [k, ...v] = c.trim().split('=');
+    if (k) out[k.trim()] = decodeURIComponent(v.join('='));
+  });
+  return out;
+}
+function requireAuth(req, res, next) {
+  if (!ADMIN_PASSWORD) return next();
+  if (verifySignedCookie(parseCookies(req)[COOKIE_NAME])) return next();
+  if (req.path.startsWith('/api')) return res.status(401).json({ error: 'Unauthorised' });
+  res.redirect('/login');
+}
 
 // Seed default profiles if they don't already exist
 const SEEDS_DIR = path.join(__dirname, 'data', 'seeds');
@@ -409,6 +444,33 @@ const upload = multer({
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// ── Login / logout routes (public) ────────────────────────────────────
+app.get('/login', (req, res) => {
+  if (!ADMIN_PASSWORD) return res.redirect('/admin.html');
+  if (verifySignedCookie(parseCookies(req)[COOKIE_NAME])) return res.redirect('/admin.html');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.post('/login', (req, res) => {
+  if (!ADMIN_PASSWORD || req.body.password === ADMIN_PASSWORD) {
+    const maxAge = 60 * 60 * 24 * 30; // 30 days
+    res.setHeader('Set-Cookie', `${COOKIE_NAME}=${signValue('admin')}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`);
+    return res.redirect('/admin.html');
+  }
+  res.redirect('/login?error=1');
+});
+app.get('/logout', (req, res) => {
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
+  res.redirect(ADMIN_PASSWORD ? '/login' : '/admin.html');
+});
+
+// ── Protected routes ───────────────────────────────────────────────────
+app.get('/api/auth-enabled', (req, res) => res.json({ enabled: !!ADMIN_PASSWORD }));
+app.get('/admin.html', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.use('/api', requireAuth);
+
+// ── Public static (overlay etc.) ──────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.redirect('/admin.html'));
 

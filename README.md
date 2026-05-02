@@ -111,7 +111,7 @@ State and uploaded logos are stored in `./data/` and `./public/uploads/` on the 
 To run on a different port:
 
 ```bash
-PORT=8080 docker compose up -d
+PORT=8080 ADMIN_PASSWORD=mysecretword docker compose up -d
 ```
 
 ---
@@ -126,6 +126,8 @@ PORT=8080 docker compose up -d
 | Variable | Example | Purpose |
 |----------|---------|---------|
 | `PORT` | `3000` | Host port |
+| `ADMIN_PASSWORD` | `mysecretword` | Password for the admin panel (unset = no login required) |
+| `COOKIE_SECRET` | *(random string)* | Signs the auth cookie — set this to keep sessions across restarts |
 | `DATA_DIR` | `/mnt/appdata/html-score/data` | Where state and profiles are saved |
 | `UPLOADS_DIR` | `/mnt/appdata/html-score/uploads` | Where uploaded logos are saved |
 

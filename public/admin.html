@@ -355,6 +355,7 @@
     <div class="status-dot" id="status-dot"></div>
     <span id="status-text">Connecting…</span>
   </div>
+  <a href="/logout" class="btn btn-ghost btn-sm" style="font-size:12px;text-decoration:none" id="logout-btn">Sign out</a>
 </div>
 
 <!-- Overlay link bar -->
@@ -2031,6 +2032,9 @@ function toast(msg, duration) {
 
 connect();
 initOverlayBar();
+fetch('/api/auth-enabled').then(r => r.json()).then(d => {
+  if (!d.enabled) document.getElementById('logout-btn').style.display = 'none';
+});
 if (Notification.permission === 'default') Notification.requestPermission();
 </script>
 </body>
