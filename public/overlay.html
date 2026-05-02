@@ -33,6 +33,7 @@
     z-index: 2;
     overflow: hidden;
     box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset;
+    transition: border-radius 0.38s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* ── Clock panel: absolutely positioned left/right of bug, slides behind ── */
@@ -46,9 +47,9 @@
     justify-content: center;
     white-space: nowrap;
     overflow: hidden;
-    transition: opacity 0.4s ease;
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  #clock-panel.hidden { opacity: 0; pointer-events: none; }
+  #clock-panel.hidden { pointer-events: none; }
 
   #clock-panel-period {
     font-family: 'Barlow Condensed', sans-serif;
@@ -410,58 +411,80 @@
   }
 
   // ── Clock panel ───────────────────────────────────────────────────────
+  let _cpPrev = { visible: null, side: null };
+
   function applyClockPanel(elapsed, running) {
     const state  = currentState;
     if (!state) return;
     const sports = currentSports || {};
     const sport  = sports[state.sport] || {};
     const periodIdx = (state.period || 1) - 1;
-    const R   = document._bugRpx ?? 10;
-    const bg  = document._bugBg  || 'rgba(8,11,16,0.92)';
+    const R      = document._bugRpx ?? 10;
+    const bg     = document._bugBg  || 'rgba(8,11,16,0.92)';
     const panel  = document.getElementById('clock-panel');
     const timeEl = document.getElementById('clock-panel-time');
     const perEl  = document.getElementById('clock-panel-period');
     const ec     = state.externalClock || {};
+    const bug    = document.getElementById('bug');
+    const side   = ec.side || 'right';
+    const visible   = !!state.display?.showClock;
+    const wasVisible = _cpPrev.visible;
+    const slideOut   = side === 'right' ? 'translateX(-110%)' : 'translateX(110%)';
 
-    const bug  = document.getElementById('bug');
-    const side = ec.side || 'right';
+    // Only update layout/animation when visibility or side changes
+    const stateChanged = visible !== wasVisible || side !== _cpPrev.side;
+    _cpPrev = { visible, side };
 
-    if (!state.display?.showClock) {
+    if (!visible) {
+      if (stateChanged) {
+        panel.style.transform = slideOut;
+        if (bug) bug.style.borderRadius = R + 'px';
+      }
       panel.classList.add('hidden');
-      if (bug) bug.style.borderRadius = R + 'px';
       return;
     }
-    panel.classList.remove('hidden');
-    panel.style.background = document._clockBg || bg;
 
-    const padH = document._clockPadH ?? 16;
+    // Position and style the panel (only reflow when something changed)
+    if (stateChanged) {
+      const padH = document._clockPadH ?? 16;
+      panel.style.paddingTop    = '10px';
+      panel.style.paddingBottom = '10px';
+      panel.style.paddingLeft   = padH + 'px';
+      panel.style.paddingRight  = padH + 'px';
 
-    // Flush positioning — no overlap, square bug corners on clock side only
-    if (side === 'right') {
-      panel.style.left         = '100%';
-      panel.style.right        = '';
-      panel.style.borderRadius = `0 ${R}px ${R}px 0`;
-      panel.style.paddingLeft  = padH + 'px';
-      panel.style.paddingRight = padH + 'px';
-      if (bug) bug.style.borderRadius = `${R}px 0 0 ${R}px`;
-    } else {
-      panel.style.right        = '100%';
-      panel.style.left         = '';
-      panel.style.borderRadius = `${R}px 0 0 ${R}px`;
-      panel.style.paddingRight = padH + 'px';
-      panel.style.paddingLeft  = padH + 'px';
-      if (bug) bug.style.borderRadius = `0 ${R}px ${R}px 0`;
+      if (side === 'right') {
+        panel.style.left         = '100%';
+        panel.style.right        = '';
+        panel.style.borderRadius = `0 ${R}px ${R}px 0`;
+        if (bug) bug.style.borderRadius = `${R}px 0 0 ${R}px`;
+      } else {
+        panel.style.right        = '100%';
+        panel.style.left         = '';
+        panel.style.borderRadius = `${R}px 0 0 ${R}px`;
+        if (bug) bug.style.borderRadius = `0 ${R}px ${R}px 0`;
+      }
+
+      panel.style.background = document._clockBg || bg;
+      panel.classList.remove('hidden');
+
+      // If becoming visible, snap to slide-out position first then animate in
+      if (!wasVisible) {
+        panel.style.transition = 'none';
+        panel.style.transform  = slideOut;
+        panel.getBoundingClientRect(); // force reflow before re-enabling transition
+        panel.style.transition = '';
+      }
+      panel.style.transform = 'translateX(0)';
     }
-    panel.style.paddingTop    = '10px';
-    panel.style.paddingBottom = '10px';
 
+    // Update content every tick
     const pm = state.periodMins ?? null;
     const ot = isOvertime(elapsed, sport, periodIdx, pm);
     timeEl.textContent = formatClock(elapsed, sport, periodIdx, pm);
     timeEl.className   = ot ? 'overtime' : (running ? 'running' : '');
 
     if (ec.showPeriod !== false) {
-      perEl.textContent  = getPeriodName(sport, state.period || 1);
+      perEl.textContent   = getPeriodName(sport, state.period || 1);
       perEl.style.display = '';
     } else {
       perEl.style.display = 'none';
