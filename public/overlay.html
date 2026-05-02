@@ -81,7 +81,7 @@
     transition: opacity 0.4s ease;
   }
   .cp-panel.hidden { opacity: 0; pointer-events: none; }
-  .cp-panel-home { left: 0; }
+  .cp-panel-home { left: 0; }  /* overridden per-render with inset */
   .cp-panel-away { right: 0; }
   .cp-pips { display: flex; gap: 3px; align-items: center; }
   .cp-pip {
@@ -519,10 +519,9 @@
       }
 
       const isHome = el.id === 'cp-home-panel';
-      const cornerPos = pos === 'bottom'
-        ? (isHome ? `0 0 0 ${R}px` : `0 0 ${R}px 0`)
-        : (isHome ? `${R}px 0 0 0` : `0 ${R}px 0 0`);
-      el.style.borderRadius = cornerPos;
+      el.style.borderRadius = `${R}px`;
+      if (isHome) { el.style.left = R + 'px'; el.style.right = ''; }
+      else        { el.style.right = R + 'px'; el.style.left = ''; }
     }
 
     positionPanel(homePanelEl, homeCards);
