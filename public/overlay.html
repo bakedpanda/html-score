@@ -519,7 +519,7 @@
       }
 
       const isHome = el.id === 'cp-home-panel';
-      el.style.borderRadius = `${R}px`;
+      el.style.borderRadius = pos === 'bottom' ? `0 0 ${R}px ${R}px` : `${R}px ${R}px 0 0`;
       if (isHome) { el.style.left = R + 'px'; el.style.right = ''; }
       else        { el.style.right = R + 'px'; el.style.left = ''; }
     }
