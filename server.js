@@ -200,8 +200,8 @@ const DEFAULT_STATE = {
     logoBgRotation: 0,
     logoBgOpacity: 40,
     // Fonts
-    scoreFont: 'Bebas Neue',
-    clockFont: 'Bebas Neue',
+    scoreFont: 'Roboto Mono',
+    clockFont: 'Roboto Mono',
     // Name block padding
     namePadH: 8,
     // Clock panel background (null = inherit bug bg)
