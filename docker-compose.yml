@@ -6,4 +6,7 @@ services:
     volumes:
       - ${DATA_DIR:-./data}:/app/data
       - ${UPLOADS_DIR:-./public/uploads}:/app/public/uploads
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - COOKIE_SECRET=${COOKIE_SECRET:-}
     restart: unless-stopped
