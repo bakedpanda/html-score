@@ -272,6 +272,12 @@
   /* ── Cards section ── */
   .cards-team-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
   .card-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+
+  /* ── Yellow card timers ── */
+  .yc-timer-row { display: flex; align-items: center; gap: 7px; padding: 5px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .yc-timer-display { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; color: var(--yellow); min-width: 54px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  @keyframes timerFlash { 0%,100%{opacity:1} 50%{opacity:0.15} }
+  .yc-timer-expired { animation: timerFlash 0.7s ease-in-out infinite; color: var(--red) !important; }
   .card-pips { display: flex; gap: 3px; flex: 1; align-items: center; }
   .card-pip { width: 14px; height: 20px; border-radius: 2px; opacity: 0.2; transition: opacity 0.2s; border: 1px solid rgba(255,255,255,0.1); }
   .card-pip.active { opacity: 1; }
@@ -587,7 +593,7 @@
             <div class="card-row">
               <div class="card-pips" id="home-yellow-pips"></div>
               <div class="card-ctrl">
-                <button class="card-btn" style="color:var(--yellow)" onclick="send({type:'updateCards',team:'home',cardType:'yellow',delta:1})">+</button>
+                <button class="card-btn" style="color:var(--yellow)" onclick="addYellowCard('home')">+</button>
                 <button class="card-btn" onclick="send({type:'updateCards',team:'home',cardType:'yellow',delta:-1})">−</button>
               </div>
               <div class="card-badge" style="background:var(--yellow)"></div>
@@ -606,7 +612,7 @@
             <div class="card-row">
               <div class="card-pips" id="away-yellow-pips"></div>
               <div class="card-ctrl">
-                <button class="card-btn" style="color:var(--yellow)" onclick="send({type:'updateCards',team:'away',cardType:'yellow',delta:1})">+</button>
+                <button class="card-btn" style="color:var(--yellow)" onclick="addYellowCard('away')">+</button>
                 <button class="card-btn" onclick="send({type:'updateCards',team:'away',cardType:'yellow',delta:-1})">−</button>
               </div>
               <div class="card-badge" style="background:var(--yellow)"></div>
@@ -624,25 +630,21 @@
 
         <!-- Card timers (shown for sports with hasCards) -->
         <div id="yc-timer-section" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
-          <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Yellow Card Sin Bin — 10 min</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim)">Yellow Card Sin Bin</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <input type="number" id="yc-mins" value="10" min="1" max="30" style="width:48px" title="Sin bin duration in minutes">
+              <span style="font-size:12px;color:var(--text-dim)">min</span>
+            </div>
+          </div>
           <div class="row-2" style="margin-bottom:10px">
             <div>
               <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="yc-home-label">Home</div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--yellow);min-width:60px" id="yc-home-display">10:00</div>
-                <input type="number" id="yc-home-mins" value="10" min="1" max="30" style="width:52px" title="Minutes">
-                <button class="btn btn-ghost btn-sm" id="yc-home-btn" onclick="toggleYcTimer('home')">▶ Start</button>
-                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('yc','home')">↺</button>
-              </div>
+              <div id="yc-home-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
             <div>
               <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="yc-away-label">Away</div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--yellow);min-width:60px" id="yc-away-display">10:00</div>
-                <input type="number" id="yc-away-mins" value="10" min="1" max="30" style="width:52px" title="Minutes">
-                <button class="btn btn-ghost btn-sm" id="yc-away-btn" onclick="toggleYcTimer('away')">▶ Start</button>
-                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('yc','away')">↺</button>
-              </div>
+              <div id="yc-away-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
           </div>
           <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Red Card Temporary Dismissal — 20 min</div>
@@ -1264,8 +1266,8 @@ function applyState() {
   document.getElementById('score-away-label').textContent = an;
   document.getElementById('cards-home-label').textContent = hn;
   document.getElementById('cards-away-label').textContent = an;
-  document.getElementById('yc-home-label').textContent = hn;
-  document.getElementById('yc-away-label').textContent = an;
+  const ycHomeLabel = document.getElementById('yc-home-label'); if (ycHomeLabel) ycHomeLabel.textContent = hn;
+  const ycAwayLabel = document.getElementById('yc-away-label'); if (ycAwayLabel) ycAwayLabel.textContent = an;
   document.getElementById('rc-home-label').textContent = hn;
   document.getElementById('rc-away-label').textContent = an;
 
@@ -1781,48 +1783,77 @@ function onPeriodMinsChange(val) {
 }
 
 // ── Card timers (admin-side only) ──────────────────────────────────────
-const ycTimers   = { home: null, away: null };
-const ycRemaining = { home: 0,  away: 0  };
+let ycNextId = 0;
+const ycTimerList = { home: [], away: [] };
+
+function addYellowCard(team) {
+  send({ type: 'updateCards', team, cardType: 'yellow', delta: 1 });
+  startYcTimer(team);
+}
+
+function startYcTimer(team) {
+  const mins = parseInt(document.getElementById('yc-mins')?.value) || 10;
+  const id   = ++ycNextId;
+  const entry = { id, remaining: mins * 60, interval: null, expired: false };
+  ycTimerList[team].push(entry);
+  renderYcTimers(team);
+  entry.interval = setInterval(() => {
+    entry.remaining--;
+    const dispEl = document.getElementById(`yc-disp-${team}-${id}`);
+    if (dispEl) dispEl.textContent = fmtCardTimer(entry.remaining);
+    if (entry.remaining <= 0 && !entry.expired) {
+      entry.expired = true;
+      clearInterval(entry.interval);
+      entry.interval = null;
+      if (dispEl) dispEl.classList.add('yc-timer-expired');
+      const row = document.getElementById(`yc-row-${team}-${id}`);
+      if (row) {
+        const btn = row.querySelector('button');
+        if (btn) { btn.className = 'btn btn-danger btn-sm'; btn.textContent = 'Dismiss'; }
+      }
+      const teamName = state?.[team]?.name || team;
+      toast(`Yellow card sin bin expired — ${teamName}`, 8000);
+    }
+  }, 1000);
+}
+
+function renderYcTimers(team) {
+  const container = document.getElementById(`yc-${team}-timers`);
+  if (!container) return;
+  container.innerHTML = '';
+  ycTimerList[team].forEach(entry => {
+    const row = document.createElement('div');
+    row.className = 'yc-timer-row';
+    row.id = `yc-row-${team}-${entry.id}`;
+    const dispClass = entry.expired ? 'yc-timer-display yc-timer-expired' : 'yc-timer-display';
+    const btnClass  = entry.expired ? 'btn btn-danger btn-sm' : 'btn btn-ghost btn-sm';
+    const btnLabel  = entry.expired ? 'Dismiss' : 'Remove';
+    row.innerHTML = `
+      <div class="${dispClass}" id="yc-disp-${team}-${entry.id}">${fmtCardTimer(entry.remaining)}</div>
+      <button class="${btnClass}" onclick="removeYcTimer('${team}',${entry.id})" style="margin-left:auto">${btnLabel}</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function removeYcTimer(team, id) {
+  const idx = ycTimerList[team].findIndex(e => e.id === id);
+  if (idx === -1) return;
+  const entry = ycTimerList[team][idx];
+  if (entry.interval) clearInterval(entry.interval);
+  ycTimerList[team].splice(idx, 1);
+  renderYcTimers(team);
+  send({ type: 'updateCards', team, cardType: 'yellow', delta: -1 });
+}
+
+function fmtCardTimer(s) {
+  s = Math.max(0, Math.floor(s));
+  return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+}
+
+// ── Red card timers (single per team) ─────────────────────────────────
 const rcTimers    = { home: null, away: null };
 const rcRemaining = { home: 0,   away: 0   };
-
-function toggleYcTimer(team) {
-  if (ycTimers[team]) {
-    // Stop
-    clearInterval(ycTimers[team]);
-    ycTimers[team] = null;
-    document.getElementById(`yc-${team}-btn`).textContent = '▶ Start';
-  } else {
-    // Start — read minutes from input, reset remaining
-    const mins = parseInt(document.getElementById(`yc-${team}-mins`).value) || 10;
-    ycRemaining[team] = mins * 60;
-    updateYcDisplay(team);
-    document.getElementById(`yc-${team}-btn`).textContent = '⏸ Stop';
-    ycTimers[team] = setInterval(() => {
-      ycRemaining[team]--;
-      updateYcDisplay(team);
-      if (ycRemaining[team] <= 0) {
-        clearInterval(ycTimers[team]);
-        ycTimers[team] = null;
-        document.getElementById(`yc-${team}-btn`).textContent = '▶ Start';
-        // Prompt — don't auto-dismiss the card
-        const teamName = state?.[team]?.name || team;
-        toast(`⚠ Yellow card timer expired for ${teamName}!`, 8000);
-        if (Notification.permission === 'granted') {
-          new Notification('Yellow Card Timer', { body: `${teamName}'s yellow card time is up!` });
-        }
-      }
-    }, 1000);
-  }
-}
-
-function updateYcDisplay(team) {
-  const s = ycRemaining[team];
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  document.getElementById(`yc-${team}-display`).textContent =
-    `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
 
 function toggleRcTimer(team) {
   if (rcTimers[team]) {
@@ -1842,10 +1873,7 @@ function toggleRcTimer(team) {
         rcTimers[team] = null;
         document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
         const teamName = state?.[team]?.name || team;
-        toast(`⚠ Red card timer expired for ${teamName}!`, 8000);
-        if (Notification.permission === 'granted') {
-          new Notification('Red Card Timer', { body: `${teamName}'s temporary dismissal is up!` });
-        }
+        toast(`Red card temporary dismissal expired — ${teamName}`, 8000);
       }
     }, 1000);
   }
@@ -1853,21 +1881,17 @@ function toggleRcTimer(team) {
 
 function updateRcDisplay(team) {
   const s = rcRemaining[team];
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  document.getElementById(`rc-${team}-display`).textContent =
-    `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  document.getElementById(`rc-${team}-display`).textContent = fmtCardTimer(s);
 }
 
 function resetCardTimer(type, team) {
-  const timers    = type === 'yc' ? ycTimers    : rcTimers;
-  const remaining = type === 'yc' ? ycRemaining : rcRemaining;
-  if (timers[team]) { clearInterval(timers[team]); timers[team] = null; }
-  const minsEl = document.getElementById(`${type}-${team}-mins`);
-  const mins = parseInt(minsEl?.value) || (type === 'yc' ? 10 : 20);
-  remaining[team] = mins * 60;
-  if (type === 'yc') updateYcDisplay(team); else updateRcDisplay(team);
-  document.getElementById(`${type}-${team}-btn`).textContent = '▶ Start';
+  if (type === 'rc') {
+    if (rcTimers[team]) { clearInterval(rcTimers[team]); rcTimers[team] = null; }
+    const mins = parseInt(document.getElementById(`rc-${team}-mins`)?.value) || 20;
+    rcRemaining[team] = mins * 60;
+    updateRcDisplay(team);
+    document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
+  }
 }
 
 // ── Logo colour extraction ─────────────────────────────────────────────
