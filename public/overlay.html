@@ -423,29 +423,34 @@
     const perEl  = document.getElementById('clock-panel-period');
     const ec     = state.externalClock || {};
 
+    const bug  = document.getElementById('bug');
+    const side = ec.side || 'right';
+
     if (!state.display?.showClock) {
       panel.classList.add('hidden');
+      if (bug) bug.style.borderRadius = R + 'px';
       return;
     }
     panel.classList.remove('hidden');
     panel.style.background = document._clockBg || bg;
 
-    const side     = ec.side || 'right';
-    const padH     = document._clockPadH ?? 16;
-    const innerPad = R + padH; // equal visual space on both sides of the text
+    const padH = document._clockPadH ?? 16;
 
+    // Flush positioning — no overlap, square bug corners on clock side only
     if (side === 'right') {
-      panel.style.left         = `calc(100% - ${R}px)`;
+      panel.style.left         = '100%';
       panel.style.right        = '';
       panel.style.borderRadius = `0 ${R}px ${R}px 0`;
-      panel.style.paddingLeft  = innerPad + 'px';
+      panel.style.paddingLeft  = padH + 'px';
       panel.style.paddingRight = padH + 'px';
+      if (bug) bug.style.borderRadius = `${R}px 0 0 ${R}px`;
     } else {
-      panel.style.right        = `calc(100% - ${R}px)`;
+      panel.style.right        = '100%';
       panel.style.left         = '';
       panel.style.borderRadius = `${R}px 0 0 ${R}px`;
-      panel.style.paddingRight = innerPad + 'px';
+      panel.style.paddingRight = padH + 'px';
       panel.style.paddingLeft  = padH + 'px';
+      if (bug) bug.style.borderRadius = `0 ${R}px ${R}px 0`;
     }
     panel.style.paddingTop    = '10px';
     panel.style.paddingBottom = '10px';
