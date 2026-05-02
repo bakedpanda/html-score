@@ -20,7 +20,7 @@ const PROFILES_DIR = path.join(__dirname, 'data', 'profiles');
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD?.trim().replace(/^["']|["']$/g, '') || null;
 const COOKIE_SECRET  = process.env.COOKIE_SECRET  || crypto.randomBytes(32).toString('hex');
 const COOKIE_NAME    = 'sb_auth';
 
@@ -453,7 +453,7 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 app.post('/login', (req, res) => {
-  if (!ADMIN_PASSWORD || req.body.password === ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD || req.body.password?.trim() === ADMIN_PASSWORD) {
     const maxAge = 60 * 60 * 24 * 30; // 30 days
     res.setHeader('Set-Cookie', `${COOKIE_NAME}=${signValue('admin')}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`);
     return res.redirect('/admin.html');
