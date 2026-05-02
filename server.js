@@ -18,6 +18,15 @@ const PROFILES_DIR = path.join(__dirname, 'data', 'profiles');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
+// Seed default profiles if they don't already exist
+const SEEDS_DIR = path.join(__dirname, 'data', 'seeds');
+if (fs.existsSync(SEEDS_DIR)) {
+  fs.readdirSync(SEEDS_DIR).filter(f => f.endsWith('.json')).forEach(f => {
+    const dest = path.join(PROFILES_DIR, f);
+    if (!fs.existsSync(dest)) fs.copyFileSync(path.join(SEEDS_DIR, f), dest);
+  });
+}
+
 function listProfiles() {
   return fs.readdirSync(PROFILES_DIR)
     .filter(f => f.endsWith('.json'))

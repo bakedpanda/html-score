@@ -1,3 +1,4 @@
 node_modules/
-data/
+data/state.json
+data/profiles/
 public/uploads/

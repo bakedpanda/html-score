@@ -1,0 +1,57 @@
+{
+  "id": "default-style",
+  "name": "Default",
+  "type": "style",
+  "createdAt": "2026-05-02T22:28:18.984Z",
+  "data": {
+    "bugStyle": {
+      "useShortName": true,
+      "nameFont": "Russo One",
+      "nameSize": 48,
+      "nameColor": "#ffffff",
+      "scoreSize": 48,
+      "scoreColor": "#ffffff",
+      "scoreBoxBg": "#000000",
+      "scoreBoxRadius": 10,
+      "bugBgColor": "#000000",
+      "bugBgOpacity": 100,
+      "bugRadius": 10,
+      "showStrip": true,
+      "stripHeight": 12,
+      "clockSize": 46,
+      "clockColor": "#ffffff",
+      "clockRunningColor": "#ffffff",
+      "clockOvertimeColor": "#e63946",
+      "periodSize": 12,
+      "periodColor": "#667388",
+      "showFlash": false,
+      "flashColor": "#ffffff",
+      "logoMode": "circle",
+      "logoBgScale": 1.5,
+      "logoBgX": 0,
+      "logoBgY": 0,
+      "logoBgRotation": 0,
+      "logoBgOpacity": 40,
+      "scoreFont": "Russo One",
+      "clockFont": "Russo One",
+      "namePadH": 30,
+      "clockBgColor": "#000000",
+      "clockBgOpacity": null,
+      "clockPadH": 40,
+      "cardPanelPosition": "bottom",
+      "cardPanelScale": 1
+    },
+    "display": {
+      "visible": true,
+      "showClock": true,
+      "showCards": true,
+      "showPeriod": true,
+      "showLogos": true
+    },
+    "position": {
+      "x": 80,
+      "y": 60
+    },
+    "scale": 1
+  }
+}
