@@ -14,9 +14,9 @@ Built for rugby union, rugby league, football, and more — fully self-hostable,
 
 **Livestreaming software** — OBS Studio, Streamlabs, vMix, XSplit, Wirecast, Restream Studio
 
-**Vision mixers** — vMix, Blackmagic ATEM (via browser input or capture card), NewTek TriCaster, Ross Carbonite, Panasonic AV-HS series
+**Vision mixers** — vMix, Blackmagic ATEM, NewTek TriCaster, Ross Carbonite, Panasonic AV-HS series
 
-The overlay is a transparent web page — any software that supports a browser source or web input can use it.
+The overlay is a transparent web page — any software that supports a browser source or web input can use it. For hardware vision mixers that can't load HTML directly, see [atem-html-source](https://github.com/bakedpanda/atem-html-source) which renders the overlay and feeds it in via a capture device.
 
 ---
 
@@ -61,7 +61,7 @@ The overlay URL is shown at the top of the admin panel. Add it as a browser sour
 | **vMix** | Add Input → Web Browser → paste URL |
 | **XSplit** | Add Source → Webpage → paste URL |
 | **Wirecast** | Add Layer → Web Page → paste URL |
-| **Blackmagic ATEM** (with Web Presenter or media player input) | Point a browser at the overlay URL and feed via capture card |
+| **Blackmagic ATEM** | Use [atem-html-source](https://github.com/bakedpanda/atem-html-source) to render and feed the overlay in |
 | **TriCaster** | Web browser input → paste URL |
 
 ---
