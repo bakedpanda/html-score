@@ -1,65 +1,74 @@
 # html-score
 
-A real-time sports score bug overlay for OBS and browser-source streaming, controlled via a web admin panel.
+A real-time sports score bug overlay for livestreaming software and vision mixers, controlled from a web-based admin panel on any device.
 
-![Sports Score Overlay](https://img.shields.io/badge/sports-rugby%20%7C%20football%20%7C%20more-blue)
+Built for rugby union, rugby league, football, and more — fully self-hostable, no subscriptions, no cloud dependency.
+
+![Sports](https://img.shields.io/badge/sports-rugby%20%7C%20football%20%7C%20more-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
+---
+
+## Works with
+
+**Livestreaming software** — OBS Studio, Streamlabs, vMix, XSplit, Wirecast, Restream Studio
+
+**Vision mixers** — vMix, Blackmagic ATEM (via browser input or capture card), NewTek TriCaster, Ross Carbonite, Panasonic AV-HS series
+
+The overlay is a transparent web page — any software that supports a browser source or web input can use it.
+
+---
+
 ## Features
 
-- **Live score control** — increment/decrement scores with one click
+- **Live score control** — increment/decrement scores with one click, controllable from any device on the network
 - **Clock** — count up/down with overtime detection and colour changes
-- **Discipline cards** — yellow and red cards with per-team timers (including rugby's 20-min dismissal)
+- **Discipline cards** — yellow and red cards with per-team timers, including rugby's 20-minute temporary dismissal
 - **Multi-sport** — Rugby Union, Rugby League, Football, American Football, Basketball, Ice Hockey, and more
-- **Period management** — auto-sets clock to correct start time when advancing periods
-- **Logo backgrounds** — per-team logo display with scale, opacity, position, rotation, and vignette fade controls
-- **Logo colour extraction** — click-to-apply dominant colour swatches pulled from uploaded logos
+- **Period management** — auto-sets clock to the correct start time when advancing periods; customisable match length
+- **Team logos** — circle or full-bleed background mode with scale, opacity, position, rotation, and vignette fade per team
+- **Logo colour extraction** — click-to-apply dominant colour swatches pulled automatically from uploaded logos
 - **Full style control** — fonts, colours, sizes, corner radius, colour strip, clock panel, card panel
 - **Profiles** — save and load named style presets
 - **WebSocket sync** — overlay updates in real time with no page refresh
-- **OBS-ready** — transparent background, browser source compatible
 
-## Quick Start
+---
 
-### Node.js
+## Supported Sports
 
-```bash
-npm install
-npm start
-```
+| Sport | Clock | Cards | Periods |
+|-------|-------|-------|---------|
+| Rugby Union | count-up | Yellow + 20-min Red | 2 halves |
+| Rugby League | count-up | Yellow + Red | 2 halves |
+| Football (Soccer) | count-up | Yellow + Red | 2 halves |
+| American Football | count-down | — | 4 quarters |
+| Basketball | count-down | — | 4 quarters |
+| Ice Hockey | count-down | — | 3 periods |
+| Netball | count-down | — | 4 quarters |
+| Volleyball | — | — | Sets |
+| Cricket | — | — | Innings |
 
-Then open:
-- **Admin panel**: http://localhost:3000/admin.html
-- **Overlay** (add as Browser Source in OBS): http://localhost:3000/overlay.html
+---
 
-### Docker
+## Adding the overlay to your software
 
-```bash
-docker compose up -d
-```
+The overlay URL is shown at the top of the admin panel. Add it as a browser source at your production canvas resolution (e.g. 1920×1080). The background is transparent — place it above your video sources.
 
-Data and uploaded logos are persisted in `./data/` and `./public/uploads/` on the host.
+| Software | How to add |
+|----------|-----------|
+| **OBS Studio / Streamlabs** | Sources → Add → Browser Source → paste URL |
+| **vMix** | Add Input → Web Browser → paste URL |
+| **XSplit** | Add Source → Webpage → paste URL |
+| **Wirecast** | Add Layer → Web Page → paste URL |
+| **Blackmagic ATEM** (with Web Presenter or media player input) | Point a browser at the overlay URL and feed via capture card |
+| **TriCaster** | Web browser input → paste URL |
 
-To use a different port:
-
-```bash
-PORT=8080 docker compose up -d
-```
-
-## OBS Setup
-
-1. Add a **Browser Source** in OBS
-2. Set the URL to `http://localhost:3000/overlay.html`
-3. Set width/height to match your canvas (e.g. 1920×1080)
-4. Enable **"Shutdown source when not visible"** if you want the clock to pause off-stream
-5. The overlay background is transparent — place it above your video sources
+---
 
 ## Admin Panel
 
-Open `http://localhost:3000/admin.html` on any device on the same network (use your machine's local IP instead of `localhost`).
-
-### Tabs
+Open the admin panel on any device on the same network — phone, tablet, or laptop. The overlay link bar at the top of the page shows the correct URL to use.
 
 | Tab | Purpose |
 |-----|---------|
@@ -68,19 +77,89 @@ Open `http://localhost:3000/admin.html` on any device on the same network (use y
 | **Style** | Full visual customisation |
 | **Profiles** | Save/load style presets |
 
-## Supported Sports
+---
 
-| Sport | Clock | Cards | Periods |
-|-------|-------|-------|---------|
-| Rugby Union | ✓ count-up | Yellow + 20-min Red | 2 halves |
-| Rugby League | ✓ count-up | Yellow + Red | 2 halves |
-| Football (Soccer) | ✓ count-up | Yellow + Red | 2 halves |
-| American Football | ✓ count-down | — | 4 quarters |
-| Basketball | ✓ count-down | — | 4 quarters |
-| Ice Hockey | ✓ count-down | — | 3 periods |
-| Netball | ✓ count-down | — | 4 quarters |
-| Volleyball | — | — | Sets |
-| Cricket | — | — | Innings |
+## Self-Hosting
+
+### Option 1 — Run locally (Node.js)
+
+Requires [Node.js](https://nodejs.org) 18 or later.
+
+```bash
+git clone https://github.com/bakedpanda/html-score.git
+cd html-score
+npm install
+npm start
+```
+
+Open http://localhost:3000/admin.html to get started.
+
+---
+
+### Option 2 — Docker (local or server)
+
+Requires [Docker](https://docs.docker.com/get-docker/) with the Compose plugin.
+
+```bash
+git clone https://github.com/bakedpanda/html-score.git
+cd html-score
+docker compose up -d
+```
+
+State and uploaded logos are stored in `./data/` and `./public/uploads/` on the host and survive container restarts.
+
+To run on a different port:
+
+```bash
+PORT=8080 docker compose up -d
+```
+
+---
+
+### Option 3 — Portainer
+
+1. In Portainer, go to **Stacks → Add stack**
+2. Choose **Repository** and enter `https://github.com/bakedpanda/html-score`
+3. Set the compose file path to `docker-compose.yml`
+4. Under **Environment variables**, add `PORT=3000` (or whichever port you want)
+5. Deploy the stack
+
+---
+
+### Option 4 — VPS / cloud server
+
+Any Linux VPS (DigitalOcean, Hetzner, Linode, AWS EC2, etc.) works. SSH in and follow the Docker instructions above.
+
+To make it accessible from the internet, either:
+
+**A) Expose the port directly** — open the port in your firewall/security group and access via `http://YOUR_SERVER_IP:3000`
+
+**B) Put it behind a reverse proxy** — recommended if you want HTTPS or a domain name. Example with Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name score.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+The `Upgrade` and `Connection` headers are required for the WebSocket connection to work through the proxy.
+
+Then use [Certbot](https://certbot.eff.org/) to add a free HTTPS certificate:
+
+```bash
+sudo certbot --nginx -d score.yourdomain.com
+```
+
+---
 
 ## License
 
