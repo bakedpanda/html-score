@@ -317,6 +317,7 @@ const DEFAULT_STATE = {
     // Card panel
     cardPanelPosition: 'bottom',
     cardPanelScale: 1.0,
+    cardPanelBgOpacity: 92,
   },
   externalClock: {
     side: 'right',

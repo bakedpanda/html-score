@@ -70,29 +70,19 @@
   #clock-panel-time.running  { color: var(--clock-running-color,  #4ade80); }
   #clock-panel-time.overtime { color: var(--clock-overtime-color, #e63946); }
 
-  /* ── Card panel: absolutely positioned top/bottom of bug, slides behind ── */
-  #card-panel {
+  /* ── Card panels: one per team, auto-sized to their pips ── */
+  .cp-panel {
     position: absolute;
-    left: 0; right: 0;
-    z-index: 1;
-    display: flex;
+    z-index: 10;
+    display: inline-flex;
     align-items: center;
-    padding: 0 14px;
-    gap: 8px;
-    overflow: hidden;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    padding: 6px 10px;
+    gap: 4px;
+    transition: opacity 0.4s ease;
   }
-  #card-panel.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .cp-team {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 0;
-  }
+  .cp-panel.hidden { opacity: 0; pointer-events: none; }
+  .cp-panel-home { left: 0; }
+  .cp-panel-away { right: 0; }
   .cp-pips { display: flex; gap: 3px; align-items: center; }
   .cp-pip {
     border-radius: 2px;
@@ -100,7 +90,6 @@
   }
   .cp-pip.yellow { background: #f5c400; }
   .cp-pip.red    { background: #e63946; }
-  .cp-spacer { flex: 1; }
 
   /* ── Score bug layout ── */
   .colour-strip {
@@ -277,15 +266,12 @@
     <span id="clock-panel-time">00:00</span>
   </div>
 
-  <!-- Card panel: slides out top/bottom -->
-  <div id="card-panel" class="hidden">
-    <div class="cp-team" id="cp-home">
-      <div class="cp-pips" id="cp-home-pips"></div>
-    </div>
-    <div class="cp-spacer"></div>
-    <div class="cp-team" id="cp-away">
-      <div class="cp-pips" id="cp-away-pips"></div>
-    </div>
+  <!-- Card panels: separate per team -->
+  <div id="cp-home-panel" class="cp-panel cp-panel-home hidden">
+    <div id="cp-home-pips" class="cp-pips"></div>
+  </div>
+  <div id="cp-away-panel" class="cp-panel cp-panel-away hidden">
+    <div id="cp-away-pips" class="cp-pips"></div>
   </div>
 </div><!-- /#bug-wrapper -->
 
@@ -494,56 +480,58 @@
   }
 
   function applyCardPanel(state, sports) {
-    const panel  = document.getElementById('card-panel');
-    const sport  = sports?.[state.sport] || {};
-    const d      = state.display;
-    const R      = document._bugRpx ?? 10;
-    const bg     = document._bugBg  || 'rgba(8,11,16,0.92)';
-    const pos    = document._cardPanelPosition || 'bottom';
+    const sport = sports?.[state.sport] || {};
+    const d     = state.display;
+    const s     = state.bugStyle || {};
+    const R     = document._bugRpx ?? 10;
+    const pos   = document._cardPanelPosition || 'bottom';
 
-    const totalCards =
-      (state.home.yellowCards||0) + (state.home.redCards||0) +
-      (state.away.yellowCards||0) + (state.away.redCards||0);
+    const [r,g,b] = hexToRgb(s.bugBgColor || '#080b10');
+    const opacity  = (s.cardPanelBgOpacity ?? s.bugBgOpacity ?? 92) / 100;
+    const bg       = `rgba(${r},${g},${b},${opacity})`;
 
-    const show = d.showCards && sport.hasCards && totalCards > 0;
-
-    if (!show) {
-      panel.classList.add('hidden');
-      return;
-    }
-
-    panel.classList.remove('hidden');
-    panel.style.background = bg;
-
-    const overlap = R;
-    const innerPad = overlap + 5;
-
-    if (pos === 'bottom') {
-      panel.style.top          = `calc(100% - ${overlap}px)`;
-      panel.style.bottom       = '';
-      panel.style.borderRadius = `0 0 ${R}px ${R}px`;
-      panel.style.paddingTop   = innerPad + 'px';
-      panel.style.paddingBottom = '7px';
-    } else {
-      panel.style.bottom       = `calc(100% - ${overlap}px)`;
-      panel.style.top          = '';
-      panel.style.borderRadius = `${R}px ${R}px 0 0`;
-      panel.style.paddingBottom = innerPad + 'px';
-      panel.style.paddingTop   = '7px';
-    }
-
+    const canShow = d.showCards && sport.hasCards;
     const homeCards = (state.home.yellowCards||0) + (state.home.redCards||0);
     const awayCards = (state.away.yellowCards||0) + (state.away.redCards||0);
-    const cpHome = document.getElementById('cp-home');
-    const cpAway = document.getElementById('cp-away');
-    cpHome.style.display = homeCards > 0 ? 'flex' : 'none';
-    cpAway.style.display = awayCards > 0 ? 'flex' : 'none';
-    if (homeCards > 0) {
+
+    const homePanelEl = document.getElementById('cp-home-panel');
+    const awayPanelEl = document.getElementById('cp-away-panel');
+
+    function positionPanel(el, hasCards) {
+      if (!canShow || !hasCards) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.classList.remove('hidden');
+      el.style.background = bg;
+
+      // Flush positioning — no overlap, so opacities don't compound
+      if (pos === 'bottom') {
+        el.style.top           = '100%';
+        el.style.bottom        = '';
+        el.style.paddingTop    = '7px';
+        el.style.paddingBottom = '8px';
+      } else {
+        el.style.bottom        = '100%';
+        el.style.top           = '';
+        el.style.paddingBottom = '7px';
+        el.style.paddingTop    = '8px';
+      }
+
+      const isHome = el.id === 'cp-home-panel';
+      const cornerPos = pos === 'bottom'
+        ? (isHome ? `0 0 0 ${R}px` : `0 0 ${R}px 0`)
+        : (isHome ? `${R}px 0 0 0` : `0 ${R}px 0 0`);
+      el.style.borderRadius = cornerPos;
+    }
+
+    positionPanel(homePanelEl, homeCards);
+    positionPanel(awayPanelEl, awayCards);
+
+    if (canShow && homeCards > 0)
       renderCpPips(document.getElementById('cp-home-pips'), state.home.yellowCards, state.home.redCards);
-    }
-    if (awayCards > 0) {
+    if (canShow && awayCards > 0)
       renderCpPips(document.getElementById('cp-away-pips'), state.away.yellowCards, state.away.redCards);
-    }
   }
 
   // ── Logos ─────────────────────────────────────────────────────────────

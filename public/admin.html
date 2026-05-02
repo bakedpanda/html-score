@@ -947,7 +947,7 @@
     <div class="card">
       <div class="card-header">Card Panel</div>
       <div class="card-body style-section">
-        <div class="style-row cols-2">
+        <div class="style-row cols-3">
           <div class="field">
             <label>Position</label>
             <div style="display:flex;gap:7px;margin-top:6px">
@@ -958,6 +958,10 @@
           <div class="field">
             <label>Card Scale — <span id="cp-scale-val">1.0×</span></label>
             <div class="slider-row"><input type="range" id="cp-scale" min="50" max="250" value="100" oninput="onCpScale(this.value)"></div>
+          </div>
+          <div class="field">
+            <label>Opacity — <span id="s-cp-bg-opacity-val">92%</span></label>
+            <div class="slider-row"><input type="range" id="s-cp-bg-opacity" min="0" max="100" value="92" oninput="onStyleSlider('cardPanelBgOpacity',this.value,'s-cp-bg-opacity-val','%')"></div>
           </div>
         </div>
       </div>
@@ -1433,6 +1437,7 @@ function syncStyleUI(bs) {
     cpScaleEl.value = Math.round((bs.cardPanelScale || 1) * 100);
     document.getElementById('cp-scale-val').textContent = (bs.cardPanelScale || 1).toFixed(1) + '×';
   }
+  setSR('s-cp-bg-opacity', 's-cp-bg-opacity-val', bs.cardPanelBgOpacity ?? 92, '%');
 }
 
 function syncClockPanelUI(ec) {
@@ -1495,11 +1500,6 @@ function renderCardPips(team, yellow, red) {
     const el    = document.getElementById(`${team}-${type}-pips`);
     const count = type === 'yellow' ? yellow : red;
     el.innerHTML = '';
-    // always show one dim placeholder pip
-    const placeholder = document.createElement('div');
-    placeholder.className = `card-pip ${type}`;
-    el.appendChild(placeholder);
-    // then one active pip per card
     for (let i = 0; i < count; i++) {
       const d = document.createElement('div');
       d.className = `card-pip ${type} active`;
