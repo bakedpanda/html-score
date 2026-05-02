@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Score Bug Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@600;700&family=Bebas+Neue&family=Chakra+Petch:wght@600;700&family=Changa:wght@600;700&family=Exo+2:wght@700;800&family=Fjalla+One&family=Inter:wght@700;800&family=Kanit:wght@600;700&family=Montserrat:wght@700;800&family=Orbitron:wght@700;800&family=Oswald:wght@600;700&family=Rajdhani:wght@600;700&family=Roboto+Condensed:wght@700&family=Russo+One&family=Saira+Condensed:wght@600;700&family=Saira+Extra+Condensed:wght@600;700&family=Squada+One&family=Teko:wght@600;700&family=Titillium+Web:wght@600;700&family=Yantramanav:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  /* ── Wrapper: sized by #bug, panels hang off it via absolute positioning ── */
+  #bug-wrapper {
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: top left;
+    display: inline-block;
+    transition: opacity 0.5s ease, transform 0.3s ease;
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.55));
+  }
+  #bug-wrapper.hidden { opacity: 0; pointer-events: none; }
+
+  /* ── Bug: always full border-radius, on top of all panels ── */
+  #bug {
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset;
+  }
+
+  /* ── Clock panel: absolutely positioned left/right of bug, slides behind ── */
+  #clock-panel {
+    position: absolute;
+    top: 0; bottom: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.4s ease;
+  }
+  #clock-panel.hidden { opacity: 0; pointer-events: none; }
+
+  #clock-panel-period {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: var(--period-size, 13px);
+    font-weight: 700;
+    color: var(--period-color, #667388);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    line-height: 1;
+  }
+  #clock-panel-time {
+    font-family: var(--clock-font, 'Share Tech Mono'), monospace;
+    font-size: var(--clock-size, 28px);
+    color: var(--clock-color, #a8b5c8);
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  #clock-panel-time.running  { color: var(--clock-running-color,  #4ade80); }
+  #clock-panel-time.overtime { color: var(--clock-overtime-color, #e63946); }
+
+  /* ── Card panel: absolutely positioned top/bottom of bug, slides behind ── */
+  #card-panel {
+    position: absolute;
+    left: 0; right: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    overflow: hidden;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  #card-panel.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cp-team {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+  }
+  .cp-pips { display: flex; gap: 3px; align-items: center; }
+  .cp-pip {
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .cp-pip.yellow { background: #f5c400; }
+  .cp-pip.red    { background: #e63946; }
+  .cp-color-strip {
+    width: 3px;
+    align-self: stretch;
+    border-radius: 2px;
+  }
+  .cp-spacer { flex: 1; }
+
+  /* ── Score bug layout ── */
+  .colour-strip {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 3;
+    display: flex;
+  }
+  .strip-home { flex: 1; background: var(--home-color, #c8102e); }
+  .strip-away { flex: 1; background: var(--away-color, #001489); }
+
+  .main-row {
+    display: flex;
+    align-items: center;
+    padding: var(--row-v-pad, 12px) 14px;
+    gap: 12px;
+  }
+
+  /* Logo background layers — absolute inside #bug, each covering its half */
+  .logo-bg-layer {
+    position: absolute;
+    top: 0; bottom: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  #home-logo-bg-layer { left: 0;  width: 50%; }
+  #away-logo-bg-layer { right: 0; width: 50%; }
+
+  .logo-bg-layer img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform-origin: center center;
+  }
+  /* Fade mask applied dynamically via JS (logoBgFadeStart / logoBgFadeEnd) */
+
+  /* Team sides */
+  .team-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .team-side.home { justify-content: flex-end; }
+  .team-side.away { justify-content: flex-start; }
+
+  /* Circle logo */
+  .team-logo-wrap {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .team-logo { max-width: 36px; max-height: 36px; object-fit: contain; }
+
+  .name-block {
+    width: var(--name-block-w, 68px);
+    height: var(--name-block-h, auto);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .team-name {
+    font-family: var(--name-font, 'Barlow Condensed'), sans-serif;
+    font-size: var(--name-size, 22px);
+    font-weight: 800;
+    color: var(--name-color, #ffffff);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  /* Score boxes — fixed width for 2 digits */
+  .scores-centre {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .score-box {
+    width:  var(--score-box-w, 68px);
+    height: var(--score-box-h, 55px);
+    background: var(--score-box-bg, #13171f);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--score-box-radius, 7px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--score-font, 'Bebas Neue'), monospace;
+    font-size: var(--score-size, 42px);
+    color: var(--score-color, #ffffff);
+    line-height: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) inset;
+    transition: color 0.3s;
+  }
+  .score-divider {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px; font-weight: 600;
+    color: rgba(255,255,255,0.2);
+    padding: 0 1px; line-height: 1;
+  }
+
+  @keyframes scoreFlash {
+    0%   { color: var(--score-color, #fff); }
+    30%  { color: var(--flash-color, #ffd700); }
+    100% { color: var(--score-color, #fff); }
+  }
+  .score-box.flash { animation: scoreFlash 0.6s ease-out; }
+</style>
+</head>
+<body>
+
+<div id="bug-wrapper">
+  <div id="bug">
+    <!-- Logo bg layers: each covers its full half of the bug, behind everything -->
+    <div class="logo-bg-layer" id="home-logo-bg-layer" style="display:none">
+      <img id="home-logo-bg" src="" alt="">
+    </div>
+    <div class="logo-bg-layer" id="away-logo-bg-layer" style="display:none">
+      <img id="away-logo-bg" src="" alt="">
+    </div>
+
+    <div class="colour-strip">
+      <div class="strip-home"></div>
+      <div class="strip-away"></div>
+    </div>
+
+    <div class="main-row" style="position:relative;z-index:1">
+      <!-- Home: circle logo + name -->
+      <div class="team-side home">
+        <div class="team-logo-wrap" id="home-logo-wrap" style="display:none">
+          <img class="team-logo" id="home-logo" src="" alt="">
+        </div>
+        <div class="name-block">
+          <div class="team-name" id="home-name">HME</div>
+        </div>
+      </div>
+
+      <!-- Scores -->
+      <div class="scores-centre">
+        <div class="score-box" id="home-score">0</div>
+        <div class="score-divider">:</div>
+        <div class="score-box" id="away-score">0</div>
+      </div>
+
+      <!-- Away: name + circle logo -->
+      <div class="team-side away">
+        <div class="name-block">
+          <div class="team-name" id="away-name">AWY</div>
+        </div>
+        <div class="team-logo-wrap" id="away-logo-wrap" style="display:none">
+          <img class="team-logo" id="away-logo" src="" alt="">
+        </div>
+      </div>
+    </div>
+  </div><!-- /#bug -->
+
+  <!-- Clock panel: slides out left/right -->
+  <div id="clock-panel" class="hidden">
+    <span id="clock-panel-period"></span>
+    <span id="clock-panel-time">00:00</span>
+  </div>
+
+  <!-- Card panel: slides out top/bottom -->
+  <div id="card-panel" class="hidden">
+    <div class="cp-team" id="cp-home">
+      <div class="cp-color-strip" id="cp-home-strip"></div>
+      <div class="cp-pips" id="cp-home-pips"></div>
+    </div>
+    <div class="cp-spacer"></div>
+    <div class="cp-team" id="cp-away">
+      <div class="cp-pips" id="cp-away-pips"></div>
+      <div class="cp-color-strip" id="cp-away-strip"></div>
+    </div>
+  </div>
+</div><!-- /#bug-wrapper -->
+
+<script>
+  const WS_URL = `ws://${location.host}`;
+  let ws;
+  let prevHomeScore = null, prevAwayScore = null;
+  let currentState = null, currentSports = null;
+
+  // ── Clock helpers ─────────────────────────────────────────────────────
+  function fmt(secs) {
+    const s = Math.floor(Math.abs(secs));
+    return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }
+
+  function getEffectiveDurations(sport, periodMins) {
+    const durs = [...(sport.periodDurations || [])];
+    if (periodMins != null && periodMins > 0) {
+      const regular = sport.periods || 2;
+      for (let i = 0; i < regular; i++) durs[i] = periodMins * 60;
+    }
+    return durs;
+  }
+
+  function periodStart(durs, periodIdx) {
+    let s = 0;
+    for (let i = 0; i < periodIdx; i++) s += (durs[i] || 0);
+    return s;
+  }
+
+  function formatClock(elapsed, sport, periodIdx, periodMins) {
+    if (!sport) return fmt(elapsed);
+    const durs = getEffectiveDurations(sport, periodMins);
+    if (sport.overtimeFormat === 'additive') {
+      const pStart = periodStart(durs, periodIdx);
+      const dur    = durs[periodIdx] || 0;
+      const over   = elapsed - pStart - dur;
+      if (over > 0) {
+        const endMin = Math.round((pStart + dur) / 60);
+        return `${endMin}+${Math.ceil(over / 60)}`;
+      }
+      return fmt(elapsed);
+    }
+    return fmt(elapsed);
+  }
+
+  function isOvertime(elapsed, sport, periodIdx, periodMins) {
+    if (!sport) return false;
+    const durs = getEffectiveDurations(sport, periodMins);
+    const dur  = durs[periodIdx];
+    if (dur == null) return false;
+    if (sport.clockDirection === 'down') return elapsed <= 0;
+    return elapsed > periodStart(durs, periodIdx) + dur;
+  }
+
+  function getPeriodName(sport, period) {
+    if (sport?.periodNames?.[period - 1]) return sport.periodNames[period - 1];
+    return sport?.periodName ? `${sport.periodName} ${period}` : `Period ${period}`;
+  }
+
+  function hexToRgb(hex) {
+    const h = hex.replace('#','');
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+  }
+
+  // ── Bug style ─────────────────────────────────────────────────────────
+  function applyBugStyle(s) {
+    const root = document.documentElement;
+    const bug  = document.getElementById('bug');
+    const R    = (s.bugRadius ?? 10) + 'px';
+
+    const [r,g,b] = hexToRgb(s.bugBgColor || '#080b10');
+    const opacity  = (s.bugBgOpacity ?? 92) / 100;
+    const bg       = `rgba(${r},${g},${b},${opacity})`;
+
+    bug.style.background   = bg;
+    bug.style.borderRadius = R;
+    document._bugBg = bg;
+    document._bugR  = R;
+    document._bugRpx = s.bugRadius ?? 10;
+
+    bug.querySelector('.colour-strip').style.height =
+      s.showStrip !== false ? (s.stripHeight || 4) + 'px' : '0';
+
+    const nameSize = s.nameSize || 22;
+    root.style.setProperty('--name-font',    s.nameFont || 'Barlow Condensed');
+    root.style.setProperty('--name-size',    nameSize + 'px');
+    root.style.setProperty('--name-color',   s.nameColor || '#ffffff');
+    const namePadH = s.namePadH ?? 8;
+    root.style.setProperty('--name-block-w', Math.round(nameSize * 3 * 0.62 + namePadH * 2) + 'px');
+
+    const scoreSize = s.scoreSize || 42;
+    root.style.setProperty('--score-size',       scoreSize + 'px');
+    root.style.setProperty('--score-color',      s.scoreColor    || '#ffffff');
+    root.style.setProperty('--score-box-bg',     s.scoreBoxBg    || '#13171f');
+    root.style.setProperty('--score-box-radius', (s.scoreBoxRadius ?? 7) + 'px');
+    // Fixed width for 2-digit scores; name-block height matches score box for alignment
+    const scoreBoxW = Math.round(scoreSize * 1.6);
+    const scoreBoxH = Math.round(scoreSize * 1.3);
+    root.style.setProperty('--score-box-w', scoreBoxW + 'px');
+    root.style.setProperty('--score-box-h', scoreBoxH + 'px');
+    root.style.setProperty('--name-block-h', scoreBoxH + 'px');
+
+    // Row vertical padding: enough to clear the colour strip, equal top and bottom
+    const stripH = s.showStrip !== false ? (s.stripHeight || 4) : 0;
+    const rowVPad = Math.max(10, stripH + 5);
+    root.style.setProperty('--row-v-pad', rowVPad + 'px');
+
+    root.style.setProperty('--clock-size',          (s.clockSize || 28) + 'px');
+    root.style.setProperty('--clock-color',          s.clockColor         || '#a8b5c8');
+    root.style.setProperty('--clock-running-color',  s.clockRunningColor  || '#4ade80');
+    root.style.setProperty('--clock-overtime-color', s.clockOvertimeColor || '#e63946');
+    root.style.setProperty('--period-size',  (s.periodSize || 13) + 'px');
+    root.style.setProperty('--period-color',  s.periodColor || '#667388');
+    root.style.setProperty('--flash-color',   s.flashColor  || '#ffd700');
+    document._showFlash = s.showFlash !== false;
+
+    // Score and clock fonts
+    root.style.setProperty('--score-font', `'${s.scoreFont || 'Bebas Neue'}'`);
+    root.style.setProperty('--clock-font', `'${s.clockFont || 'Bebas Neue'}'`);
+
+    // Clock panel background (null = inherit bug bg)
+    if (s.clockBgColor) {
+      const [cr, cg, cb] = hexToRgb(s.clockBgColor);
+      const cop = ((s.clockBgOpacity ?? 92) / 100);
+      document._clockBg = `rgba(${cr},${cg},${cb},${cop})`;
+    } else {
+      document._clockBg = null; // will fall back to bug bg
+    }
+    document._clockPadH = s.clockPadH ?? 16;
+
+    // Card panel size vars
+    root.style.setProperty('--card-pip-w', Math.round(10 * (s.cardPanelScale || 1)) + 'px');
+    root.style.setProperty('--card-pip-h', Math.round(14 * (s.cardPanelScale || 1)) + 'px');
+    document._cardPanelPosition = s.cardPanelPosition || 'bottom';
+  }
+
+  // ── Clock panel ───────────────────────────────────────────────────────
+  function applyClockPanel(elapsed, running) {
+    const state  = currentState;
+    if (!state) return;
+    const sports = currentSports || {};
+    const sport  = sports[state.sport] || {};
+    const periodIdx = (state.period || 1) - 1;
+    const R   = document._bugRpx ?? 10;
+    const bg  = document._bugBg  || 'rgba(8,11,16,0.92)';
+    const panel  = document.getElementById('clock-panel');
+    const timeEl = document.getElementById('clock-panel-time');
+    const perEl  = document.getElementById('clock-panel-period');
+    const ec     = state.externalClock || {};
+
+    if (!state.display?.showClock) {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+    panel.style.background = document._clockBg || bg;
+
+    const side     = ec.side || 'right';
+    const padH     = document._clockPadH ?? 16;
+    const innerPad = R + padH; // equal visual space on both sides of the text
+
+    if (side === 'right') {
+      panel.style.left         = `calc(100% - ${R}px)`;
+      panel.style.right        = '';
+      panel.style.borderRadius = `0 ${R}px ${R}px 0`;
+      panel.style.paddingLeft  = innerPad + 'px';
+      panel.style.paddingRight = padH + 'px';
+    } else {
+      panel.style.right        = `calc(100% - ${R}px)`;
+      panel.style.left         = '';
+      panel.style.borderRadius = `${R}px 0 0 ${R}px`;
+      panel.style.paddingRight = innerPad + 'px';
+      panel.style.paddingLeft  = padH + 'px';
+    }
+    panel.style.paddingTop    = '10px';
+    panel.style.paddingBottom = '10px';
+
+    const pm = state.periodMins ?? null;
+    const ot = isOvertime(elapsed, sport, periodIdx, pm);
+    timeEl.textContent = formatClock(elapsed, sport, periodIdx, pm);
+    timeEl.className   = ot ? 'overtime' : (running ? 'running' : '');
+
+    if (ec.showPeriod !== false) {
+      perEl.textContent  = getPeriodName(sport, state.period || 1);
+      perEl.style.display = '';
+    } else {
+      perEl.style.display = 'none';
+    }
+  }
+
+  // ── Card panel ────────────────────────────────────────────────────────
+  function renderCpPips(el, yellow, red) {
+    el.innerHTML = '';
+    const w = getComputedStyle(document.documentElement).getPropertyValue('--card-pip-w').trim() || '10px';
+    const h = getComputedStyle(document.documentElement).getPropertyValue('--card-pip-h').trim() || '14px';
+    for (let i = 0; i < yellow; i++) makePip(el, 'yellow', w, h);
+    for (let i = 0; i < red;    i++) makePip(el, 'red',    w, h);
+  }
+
+  function makePip(el, color, w, h) {
+    const d = document.createElement('div');
+    d.className = `cp-pip ${color}`;
+    d.style.width = w; d.style.height = h;
+    el.appendChild(d);
+  }
+
+  function applyCardPanel(state, sports) {
+    const panel  = document.getElementById('card-panel');
+    const sport  = sports?.[state.sport] || {};
+    const d      = state.display;
+    const R      = document._bugRpx ?? 10;
+    const bg     = document._bugBg  || 'rgba(8,11,16,0.92)';
+    const pos    = document._cardPanelPosition || 'bottom';
+
+    const totalCards =
+      (state.home.yellowCards||0) + (state.home.redCards||0) +
+      (state.away.yellowCards||0) + (state.away.redCards||0);
+
+    const show = d.showCards && sport.hasCards && totalCards > 0;
+
+    if (!show) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    panel.classList.remove('hidden');
+    panel.style.background = bg;
+
+    const overlap = R;
+    const innerPad = overlap + 5;
+
+    if (pos === 'bottom') {
+      panel.style.top          = `calc(100% - ${overlap}px)`;
+      panel.style.bottom       = '';
+      panel.style.borderRadius = `0 0 ${R}px ${R}px`;
+      panel.style.paddingTop   = innerPad + 'px';
+      panel.style.paddingBottom = '7px';
+    } else {
+      panel.style.bottom       = `calc(100% - ${overlap}px)`;
+      panel.style.top          = '';
+      panel.style.borderRadius = `${R}px ${R}px 0 0`;
+      panel.style.paddingBottom = innerPad + 'px';
+      panel.style.paddingTop   = '7px';
+    }
+
+    const homeCards = (state.home.yellowCards||0) + (state.home.redCards||0);
+    const awayCards = (state.away.yellowCards||0) + (state.away.redCards||0);
+    const cpHome = document.getElementById('cp-home');
+    const cpAway = document.getElementById('cp-away');
+    cpHome.style.display = homeCards > 0 ? 'flex' : 'none';
+    cpAway.style.display = awayCards > 0 ? 'flex' : 'none';
+    if (homeCards > 0) {
+      document.getElementById('cp-home-strip').style.background = state.home.color;
+      renderCpPips(document.getElementById('cp-home-pips'), state.home.yellowCards, state.home.redCards);
+    }
+    if (awayCards > 0) {
+      document.getElementById('cp-away-strip').style.background = state.away.color;
+      renderCpPips(document.getElementById('cp-away-pips'), state.away.yellowCards, state.away.redCards);
+    }
+  }
+
+  // ── Logos ─────────────────────────────────────────────────────────────
+  function applyLogos(state) {
+    const d = state.display;
+
+    ['home', 'away'].forEach(team => {
+      const td      = state[team];
+      const logoSrc = td.logo;
+      const mode    = td.logoMode    || 'circle';
+      const opacity = (td.logoBgOpacity ?? 40) / 100;
+      const invert  = td.logoInvert  || false;
+      const wrap    = document.getElementById(`${team}-logo-wrap`);
+      const bgLayer = document.getElementById(`${team}-logo-bg-layer`);
+      const bgImg   = document.getElementById(`${team}-logo-bg`);
+      const circImg = document.getElementById(`${team}-logo`);
+
+      const hasLogo = d.showLogos && !!logoSrc;
+
+      if (!hasLogo) {
+        wrap.style.display    = 'none';
+        bgLayer.style.display = 'none';
+        return;
+      }
+
+      const invertFilter = invert ? 'invert(1)' : '';
+
+      if (mode === 'background') {
+        wrap.style.display    = 'none';
+        bgLayer.style.display = 'block';
+        bgLayer.style.opacity = opacity;
+        bgImg.src = logoSrc;
+        bgImg.style.filter = invertFilter;
+        bgImg.style.transform =
+          `translate(${td.logoBgX || 0}%, ${td.logoBgY || 0}%) ` +
+          `rotate(${td.logoBgRotation || 0}deg) ` +
+          `scale(${td.logoBgScale || 1.5})`;
+        // Directional vignette mask
+        const fs = td.logoBgFadeStart ?? 50;
+        const fe = td.logoBgFadeEnd   ?? 100;
+        const dir = team === 'home' ? 'to right' : 'to left';
+        const mask = fs >= 100
+          ? 'none'
+          : `linear-gradient(${dir}, rgba(0,0,0,1) ${fs}%, rgba(0,0,0,0) ${fe}%)`;
+        bgImg.style.maskImage        = mask;
+        bgImg.style.webkitMaskImage  = mask;
+      } else {
+        bgLayer.style.display  = 'none';
+        wrap.style.display     = 'flex';
+        circImg.src = logoSrc;
+        circImg.style.filter = invertFilter;
+      }
+    });
+  }
+
+  // ── Full state apply ──────────────────────────────────────────────────
+  function applyState(state, sports) {
+    currentState  = state;
+    currentSports = sports;
+    const sport = sports[state.sport] || {};
+    const d     = state.display;
+    const style = state.bugStyle || {};
+
+    document.getElementById('bug-wrapper').classList.toggle('hidden', !d.visible);
+
+    const pos   = state.position || { x: 20, y: 20 };
+    const scale = state.scale    || 1.0;
+    document.getElementById('bug-wrapper').style.transform =
+      `translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
+
+    document.documentElement.style.setProperty('--home-color', state.home.color);
+    document.documentElement.style.setProperty('--away-color', state.away.color);
+
+    applyBugStyle(style);
+
+    const useShort = style.useShortName !== false;
+    document.getElementById('home-name').textContent =
+      (useShort ? (state.home.shortName || state.home.name) : state.home.name).toUpperCase();
+    document.getElementById('away-name').textContent =
+      (useShort ? (state.away.shortName || state.away.name) : state.away.name).toUpperCase();
+
+    const hEl = document.getElementById('home-score');
+    const aEl = document.getElementById('away-score');
+    if (document._showFlash) {
+      if (prevHomeScore !== null && state.home.score !== prevHomeScore) {
+        hEl.classList.remove('flash'); void hEl.offsetWidth; hEl.classList.add('flash');
+      }
+      if (prevAwayScore !== null && state.away.score !== prevAwayScore) {
+        aEl.classList.remove('flash'); void aEl.offsetWidth; aEl.classList.add('flash');
+      }
+    }
+    prevHomeScore = state.home.score;
+    prevAwayScore = state.away.score;
+    hEl.textContent = state.home.score;
+    aEl.textContent = state.away.score;
+
+    applyLogos(state);
+    applyClockPanel(state.clock.elapsed, state.clock.running);
+    applyCardPanel(state, sports);
+  }
+
+  // ── WebSocket ─────────────────────────────────────────────────────────
+  function connect() {
+    ws = new WebSocket(WS_URL);
+    ws.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'state') {
+        applyState(msg.data, msg.sports);
+      } else if (msg.type === 'clockTick') {
+        applyClockPanel(msg.elapsed, msg.running);
+      }
+    };
+    ws.onclose = () => setTimeout(connect, 2000);
+  }
+
+  connect();
+</script>
+</body>
+</html>

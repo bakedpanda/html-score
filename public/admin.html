@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Bug — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Bebas+Neue&family=Chakra+Petch:wght@600;700&family=Changa:wght@600;700&family=Exo+2:wght@700;800&family=Fjalla+One&family=Inter:wght@700;800&family=Kanit:wght@600;700&family=Montserrat:wght@700;800&family=Orbitron:wght@700;800&family=Oswald:wght@600&family=Rajdhani:wght@600;700&family=Roboto+Condensed:wght@700&family=Russo+One&family=Saira+Condensed:wght@600;700&family=Saira+Extra+Condensed:wght@600;700&family=Squada+One&family=Teko:wght@600&family=Titillium+Web:wght@600;700&family=Yantramanav:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0b0d11;
+    --surface:    #131720;
+    --surface2:   #1c2130;
+    --border:     #252b3a;
+    --accent:     #3b82f6;
+    --accent-dim: rgba(59,130,246,0.15);
+    --text:       #e2e8f0;
+    --text-dim:   #64748b;
+    --text-muted: #3d4c60;
+    --green:      #22c55e;
+    --yellow:     #f5c400;
+    --red:        #e63946;
+    --radius:     8px;
+    --radius-sm:  5px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; min-height: 100vh; }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .header-title span { color: var(--accent); }
+  .header-gap { flex: 1; }
+  .status-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--text-dim);
+    background: var(--surface2); padding: 5px 11px;
+    border-radius: 20px; border: 1px solid var(--border);
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); transition: background 0.3s; }
+  .status-dot.connected { background: var(--green); box-shadow: 0 0 5px var(--green); }
+
+  /* ── Tab Nav ── */
+  .tab-nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 20px;
+    gap: 0;
+    position: sticky; top: 49px; z-index: 90;
+  }
+  .tab-btn {
+    padding: 11px 18px;
+    background: transparent; border: none;
+    color: var(--text-dim);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Tab panels ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── Main layout ── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 18px 18px 60px; }
+
+  /* ── Cards ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .card-header {
+    padding: 9px 14px;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .card-body { padding: 14px; }
+
+  /* ── Grid helpers ── */
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* ── Form fields ── */
+  label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px;
+  }
+  input[type="text"], input[type="number"], select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'Barlow', sans-serif; font-size: 14px;
+    padding: 7px 10px; transition: border-color 0.15s; outline: none;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid transparent;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-ghost { background: var(--surface2); color: var(--text-dim); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+  .btn-danger { background: rgba(230,57,70,0.15); color: var(--red); border-color: rgba(230,57,70,0.3); }
+  .btn-danger:hover { background: rgba(230,57,70,0.3); }
+  .btn-success { background: rgba(34,197,94,0.15); color: var(--green); border-color: rgba(34,197,94,0.3); }
+  .btn-success:hover { background: rgba(34,197,94,0.3); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-lg { padding: 12px 18px; font-size: 20px; }
+
+  /* ── Color swatch ── */
+  .color-swatch-wrap { display: flex; align-items: center; gap: 8px; }
+  .color-swatch {
+    width: 32px; height: 32px; border-radius: 5px;
+    border: 2px solid rgba(255,255,255,0.1); cursor: pointer;
+    position: relative; overflow: hidden; flex-shrink: 0;
+  }
+  .color-swatch input[type="color"] {
+    position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer;
+  }
+  .color-swatch-label { font-size: 12px; color: var(--text-dim); font-family: 'Barlow', monospace; }
+
+  /* ── Toggle items ── */
+  .toggle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 7px; }
+  .toggle-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.15s;
+    user-select: none;
+  }
+  .toggle-item:hover { border-color: var(--accent); }
+  .toggle-label { font-size: 13px; font-weight: 500; color: var(--text-dim); }
+  .toggle-switch {
+    width: 36px; height: 20px; border-radius: 10px; background: var(--surface);
+    border: 1px solid var(--border); position: relative; transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--text-muted); top: 2px; left: 2px; transition: transform 0.2s, background 0.2s;
+  }
+  .toggle-item.on .toggle-switch { background: rgba(59,130,246,0.2); border-color: var(--accent); }
+  .toggle-item.on .toggle-switch::after { transform: translateX(16px); background: var(--accent); }
+  .toggle-item.on .toggle-label { color: var(--text); }
+
+  /* ── Visibility toggle ── */
+  .vis-toggle {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-radius: var(--radius); border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s; background: var(--surface2);
+  }
+  .vis-toggle.visible { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.4); }
+  .vis-toggle.hidden-overlay { background: rgba(230,57,70,0.08); border-color: rgba(230,57,70,0.3); }
+  .vis-indicator { width: 11px; height: 11px; border-radius: 50%; background: var(--red); box-shadow: 0 0 7px var(--red); flex-shrink: 0; transition: all 0.3s; }
+  .vis-toggle.visible .vis-indicator { background: var(--green); box-shadow: 0 0 7px var(--green); }
+  .vis-text { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ── Sport buttons ── */
+  .sport-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .sport-btn {
+    padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-dim);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; text-transform: uppercase;
+  }
+  .sport-btn:hover { border-color: var(--accent); color: var(--text); }
+  .sport-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* ── Team cards ── */
+  .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .team-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .team-header {
+    padding: 9px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .team-color-swatch { width: 22px; height: 22px; border-radius: 3px; border: 2px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
+  .team-color-swatch input[type="color"] { position: absolute; inset: -4px; width: calc(100%+8px); height: calc(100%+8px); opacity: 0; cursor: pointer; }
+  .team-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── Logo upload ── */
+  .logo-area { display: flex; align-items: center; gap: 10px; }
+  .logo-preview {
+    width: 52px; height: 52px; border-radius: var(--radius-sm);
+    border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0; background: var(--surface2);
+  }
+  .logo-preview img { max-width: 48px; max-height: 48px; object-fit: contain; }
+  .logo-placeholder { font-size: 20px; color: var(--text-muted); }
+  .logo-actions { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .btn-upload {
+    display: inline-block; padding: 6px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text-dim); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .btn-upload:hover { border-color: var(--accent); color: var(--text); }
+  .btn-upload input { display: none; }
+
+  /* ── Logo colour swatches ── */
+  .logo-color-swatch {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .logo-color-swatch:hover { transform: scale(1.2); box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+  /* ── Score section ── */
+  .score-area { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: start; }
+  .score-team { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .score-team-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .score-display {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 68px; font-weight: 800;
+    color: var(--text); line-height: 1; min-width: 76px; text-align: center;
+    background: var(--surface2); border-radius: var(--radius); padding: 6px 10px;
+    border: 1px solid var(--border);
+  }
+  .score-btns { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .score-inc-btn {
+    padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; line-height: 1.2;
+  }
+  .score-inc-btn .val { font-size: 15px; color: var(--accent); }
+  .score-inc-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .score-inc-btn:active { transform: scale(0.95); }
+  .score-undo { padding: 5px 12px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-dim); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .score-undo:hover { border-color: var(--red); color: var(--red); }
+  .score-sep { font-family: 'Barlow Condensed', sans-serif; font-size: 44px; color: var(--text-muted); padding-top: 28px; }
+
+  /* ── Clock ── */
+  .clock-display-big {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 60px; font-weight: 800;
+    color: var(--text); text-align: center; background: var(--surface2);
+    border-radius: var(--radius); padding: 8px 12px; border: 1px solid var(--border);
+    letter-spacing: 0.05em; transition: color 0.3s;
+  }
+  .clock-display-big.running { color: var(--green); }
+  .clock-controls { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
+  .period-controls { display: flex; align-items: center; gap: 8px; justify-content: center; }
+  .period-display {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700;
+    color: var(--text); min-width: 110px; text-align: center;
+    background: var(--surface2); border-radius: var(--radius-sm); padding: 7px 14px; border: 1px solid var(--border);
+  }
+  .clock-set-row { display: flex; gap: 7px; align-items: flex-end; }
+  .clock-set-row .field { flex: 1; }
+
+  /* ── Cards section ── */
+  .cards-team-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .card-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+  .card-pips { display: flex; gap: 3px; flex: 1; align-items: center; }
+  .card-pip { width: 14px; height: 20px; border-radius: 2px; opacity: 0.2; transition: opacity 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+  .card-pip.active { opacity: 1; }
+  .card-pip.yellow { background: var(--yellow); }
+  .card-pip.red    { background: var(--red); }
+  .card-ctrl { display: flex; gap: 3px; }
+  .card-btn { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-weight: 700; }
+  .card-btn:hover { color: var(--text); border-color: var(--accent); }
+  .card-badge { width: 20px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Style tab ── */
+  .style-section { display: flex; flex-direction: column; gap: 10px; }
+  .style-row { display: grid; gap: 12px; }
+  .style-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .style-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .style-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-val { font-size: 12px; color: var(--text-dim); min-width: 38px; text-align: right; flex-shrink: 0; }
+
+  /* Font select */
+  .font-select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 7px 10px; border-radius: var(--radius-sm);
+    font-size: 14px; cursor: pointer; appearance: auto;
+  }
+  .font-select:focus { outline: none; border-color: var(--accent); }
+
+  /* Position presets */
+  .pos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-width: 220px; }
+
+  /* ── Profiles tab ── */
+  .save-form { display: flex; flex-direction: column; gap: 10px; }
+  .save-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .save-type-btn {
+    padding: 10px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-dim);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.15s; text-align: center;
+  }
+  .save-type-btn:hover { border-color: var(--accent); color: var(--text); }
+  .save-type-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .save-type-btn small { display: block; font-family: 'Barlow', sans-serif; font-size: 10px; font-weight: 400; letter-spacing: 0; text-transform: none; color: inherit; opacity: 0.7; margin-top: 2px; }
+
+  .profile-list { display: flex; flex-direction: column; gap: 7px; }
+  .profile-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .profile-item-name { flex: 1; font-weight: 600; font-size: 14px; }
+  .profile-item-meta { font-size: 11px; color: var(--text-dim); }
+  .profile-type-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 7px;
+    border-radius: 10px; border: 1px solid var(--border);
+  }
+  .profile-type-badge.match { color: #a78bfa; border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.08); }
+  .profile-type-badge.style { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); }
+  .profile-type-badge.full, .profile-type-badge.full { color: #fb923c; border-color: rgba(251,146,60,0.3); background: rgba(251,146,60,0.08); }
+  .profile-type-badge.match\+style { color: #fb923c; border-color: rgba(251,146,60,0.3); background: rgba(251,146,60,0.08); }
+  .no-profiles { color: var(--text-dim); font-size: 14px; padding: 20px; text-align: center; }
+
+  /* ── Toast ── */
+  #toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; color: var(--text); opacity: 0; transform: translateY(6px); transition: all 0.25s; pointer-events: none; z-index: 1000; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 800px) {
+    .team-grid, .row-2, .style-row.cols-2, .style-row.cols-3, .style-row.cols-4 { grid-template-columns: 1fr; }
+    .score-area { grid-template-columns: 1fr auto 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">Score<span>Bug</span></div>
+  <div class="header-gap"></div>
+  <div class="status-pill">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Connecting…</span>
+  </div>
+</div>
+
+<!-- Tab nav -->
+<nav class="tab-nav">
+  <button class="tab-btn" id="tab-btn-setup"    onclick="switchTab('setup')">Setup</button>
+  <button class="tab-btn active" id="tab-btn-live" onclick="switchTab('live')">Live</button>
+  <button class="tab-btn" id="tab-btn-style"    onclick="switchTab('style')">Style</button>
+  <button class="tab-btn" id="tab-btn-profiles" onclick="switchTab('profiles')">Profiles</button>
+</nav>
+
+<div class="main">
+
+  <!-- ════════════════════ SETUP TAB ════════════════════ -->
+  <div class="tab-panel" id="tab-setup">
+
+    <!-- Sport -->
+    <div class="card">
+      <div class="card-header">Sport</div>
+      <div class="card-body">
+        <div class="sport-grid" id="sport-grid"></div>
+      </div>
+    </div>
+
+    <!-- Match Length -->
+    <div class="card">
+      <div class="card-header" id="match-length-header">MATCH LENGTH</div>
+      <div class="card-body">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="match-length-presets"></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+          <div>
+            <label id="match-length-label">TOTAL MINUTES</label>
+            <input type="number" id="period-mins-input" min="1" max="120" style="width:100%"
+                   oninput="onPeriodMinsChange(this.value)">
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);padding-bottom:8px;white-space:nowrap" id="match-length-desc"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams -->
+    <div class="team-grid">
+      <!-- Home -->
+      <div class="team-card">
+        <div class="team-header">
+          <div class="team-color-swatch" id="home-color-swatch">
+            <input type="color" id="home-color-input" value="#c8102e" oninput="onColorChange('home', this.value)">
+          </div>
+          Home Team
+        </div>
+        <div class="team-body">
+          <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:end">
+            <div><label>Full Name</label><input type="text" id="home-name" placeholder="Home Team" oninput="onTeamFieldChange('home','name',this.value)"></div>
+            <div><label>Short (≤5)</label><input type="text" id="home-short-name" placeholder="HME" maxlength="5" style="text-transform:uppercase;font-weight:700;letter-spacing:0.1em" oninput="onTeamFieldChange('home','shortName',this.value.toUpperCase())"></div>
+          </div>
+          <div>
+            <label>Colour</label>
+            <div class="color-swatch-wrap">
+              <div class="color-swatch" id="home-color-big">
+                <input type="color" id="home-color-input2" value="#c8102e" oninput="onColorChange('home', this.value)">
+              </div>
+              <span class="color-swatch-label" id="home-color-hex">#c8102e</span>
+            </div>
+            <div id="home-logo-colors" style="display:none;margin-top:6px">
+              <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">From Logo</div>
+              <div id="home-logo-color-swatches" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+            </div>
+          </div>
+          <div>
+            <label>Logo</label>
+            <div class="logo-area">
+              <div class="logo-preview" id="home-logo-preview">
+                <span class="logo-placeholder" id="home-logo-placeholder">⬡</span>
+                <img id="home-logo-img" src="" style="display:none" alt="">
+              </div>
+              <div class="logo-actions">
+                <label class="btn-upload">Upload Logo<input type="file" accept="image/*" onchange="uploadLogo('home', this)"></label>
+                <button class="btn-upload" onclick="removeLogo('home')" id="home-remove-logo" style="display:none">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Away -->
+      <div class="team-card">
+        <div class="team-header">
+          <div class="team-color-swatch" id="away-color-swatch">
+            <input type="color" id="away-color-input" value="#001489" oninput="onColorChange('away', this.value)">
+          </div>
+          Away Team
+        </div>
+        <div class="team-body">
+          <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:end">
+            <div><label>Full Name</label><input type="text" id="away-name" placeholder="Away Team" oninput="onTeamFieldChange('away','name',this.value)"></div>
+            <div><label>Short (≤5)</label><input type="text" id="away-short-name" placeholder="AWY" maxlength="5" style="text-transform:uppercase;font-weight:700;letter-spacing:0.1em" oninput="onTeamFieldChange('away','shortName',this.value.toUpperCase())"></div>
+          </div>
+          <div>
+            <label>Colour</label>
+            <div class="color-swatch-wrap">
+              <div class="color-swatch" id="away-color-big">
+                <input type="color" id="away-color-input2" value="#001489" oninput="onColorChange('away', this.value)">
+              </div>
+              <span class="color-swatch-label" id="away-color-hex">#001489</span>
+            </div>
+            <div id="away-logo-colors" style="display:none;margin-top:6px">
+              <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">From Logo</div>
+              <div id="away-logo-color-swatches" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+            </div>
+          </div>
+          <div>
+            <label>Logo</label>
+            <div class="logo-area">
+              <div class="logo-preview" id="away-logo-preview">
+                <span class="logo-placeholder" id="away-logo-placeholder">⬡</span>
+                <img id="away-logo-img" src="" style="display:none" alt="">
+              </div>
+              <div class="logo-actions">
+                <label class="btn-upload">Upload Logo<input type="file" accept="image/*" onchange="uploadLogo('away', this)"></label>
+                <button class="btn-upload" onclick="removeLogo('away')" id="away-remove-logo" style="display:none">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /setup -->
+
+
+  <!-- ════════════════════ LIVE TAB ════════════════════ -->
+  <div class="tab-panel active" id="tab-live">
+
+    <!-- Visibility -->
+    <div class="vis-toggle hidden-overlay" id="vis-toggle" onclick="toggleVisibility()">
+      <div class="vis-indicator" id="vis-indicator"></div>
+      <div class="vis-text" id="vis-text">Overlay Hidden</div>
+      <div style="flex:1"></div>
+      <span style="font-size:11px;color:var(--text-dim)">Click to toggle</span>
+    </div>
+
+    <!-- Scores -->
+    <div class="card">
+      <div class="card-header">Score</div>
+      <div class="card-body">
+        <div class="score-area">
+          <div class="score-team">
+            <div class="score-team-label" id="score-home-label">Home</div>
+            <div class="score-display" id="home-score-display">0</div>
+            <div class="score-btns" id="home-score-btns"></div>
+            <button class="score-undo" onclick="send({type:'updateScore',team:'home',delta:-1})">− 1</button>
+          </div>
+          <div class="score-sep">—</div>
+          <div class="score-team">
+            <div class="score-team-label" id="score-away-label">Away</div>
+            <div class="score-display" id="away-score-display">0</div>
+            <div class="score-btns" id="away-score-btns"></div>
+            <button class="score-undo" onclick="send({type:'updateScore',team:'away',delta:-1})">− 1</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clock & Period -->
+    <div class="card">
+      <div class="card-header">Clock &amp; Period</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="clock-display-big" id="clock-display">00:00</div>
+        <div class="clock-controls">
+          <button class="btn btn-success" id="clock-start-btn" onclick="clockStart()">▶ Start</button>
+          <button class="btn btn-ghost" onclick="clockStop()">⏸ Stop</button>
+          <button class="btn btn-ghost" onclick="clockReset()">↺ Reset</button>
+        </div>
+        <div class="period-controls">
+          <button class="btn btn-ghost btn-sm" onclick="changePeriod(-1)">◀</button>
+          <div class="period-display" id="period-display">Half 1</div>
+          <button class="btn btn-ghost btn-sm" onclick="changePeriod(1)">▶</button>
+        </div>
+        <div class="clock-set-row">
+          <div class="field"><label>Min</label><input type="number" id="clock-min" min="0" max="999" value="0"></div>
+          <div class="field"><label>Sec</label><input type="number" id="clock-sec" min="0" max="59" value="0"></div>
+          <button class="btn btn-ghost" onclick="setClockFromInput()">Set</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="card" id="cards-section">
+      <div class="card-header">Cards</div>
+      <div class="card-body">
+        <div class="row-2">
+          <div>
+            <div class="cards-team-label" id="cards-home-label">Home</div>
+            <div class="card-row">
+              <div class="card-pips" id="home-yellow-pips"></div>
+              <div class="card-ctrl">
+                <button class="card-btn" style="color:var(--yellow)" onclick="send({type:'updateCards',team:'home',cardType:'yellow',delta:1})">+</button>
+                <button class="card-btn" onclick="send({type:'updateCards',team:'home',cardType:'yellow',delta:-1})">−</button>
+              </div>
+              <div class="card-badge" style="background:var(--yellow)"></div>
+            </div>
+            <div class="card-row">
+              <div class="card-pips" id="home-red-pips"></div>
+              <div class="card-ctrl">
+                <button class="card-btn" style="color:var(--red)" onclick="send({type:'updateCards',team:'home',cardType:'red',delta:1})">+</button>
+                <button class="card-btn" onclick="send({type:'updateCards',team:'home',cardType:'red',delta:-1})">−</button>
+              </div>
+              <div class="card-badge" style="background:var(--red)"></div>
+            </div>
+          </div>
+          <div>
+            <div class="cards-team-label" id="cards-away-label">Away</div>
+            <div class="card-row">
+              <div class="card-pips" id="away-yellow-pips"></div>
+              <div class="card-ctrl">
+                <button class="card-btn" style="color:var(--yellow)" onclick="send({type:'updateCards',team:'away',cardType:'yellow',delta:1})">+</button>
+                <button class="card-btn" onclick="send({type:'updateCards',team:'away',cardType:'yellow',delta:-1})">−</button>
+              </div>
+              <div class="card-badge" style="background:var(--yellow)"></div>
+            </div>
+            <div class="card-row">
+              <div class="card-pips" id="away-red-pips"></div>
+              <div class="card-ctrl">
+                <button class="card-btn" style="color:var(--red)" onclick="send({type:'updateCards',team:'away',cardType:'red',delta:1})">+</button>
+                <button class="card-btn" onclick="send({type:'updateCards',team:'away',cardType:'red',delta:-1})">−</button>
+              </div>
+              <div class="card-badge" style="background:var(--red)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card timers (shown for sports with hasCards) -->
+        <div id="yc-timer-section" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Yellow Card Sin Bin — 10 min</div>
+          <div class="row-2" style="margin-bottom:10px">
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="yc-home-label">Home</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--yellow);min-width:60px" id="yc-home-display">10:00</div>
+                <input type="number" id="yc-home-mins" value="10" min="1" max="30" style="width:52px" title="Minutes">
+                <button class="btn btn-ghost btn-sm" id="yc-home-btn" onclick="toggleYcTimer('home')">▶ Start</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('yc','home')">↺</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="yc-away-label">Away</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--yellow);min-width:60px" id="yc-away-display">10:00</div>
+                <input type="number" id="yc-away-mins" value="10" min="1" max="30" style="width:52px" title="Minutes">
+                <button class="btn btn-ghost btn-sm" id="yc-away-btn" onclick="toggleYcTimer('away')">▶ Start</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('yc','away')">↺</button>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Red Card Temporary Dismissal — 20 min</div>
+          <div class="row-2">
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="rc-home-label">Home</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--red);min-width:60px" id="rc-home-display">20:00</div>
+                <input type="number" id="rc-home-mins" value="20" min="1" max="60" style="width:52px" title="Minutes">
+                <button class="btn btn-ghost btn-sm" id="rc-home-btn" onclick="toggleRcTimer('home')">▶ Start</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('rc','home')">↺</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="rc-away-label">Away</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--red);min-width:60px" id="rc-away-display">20:00</div>
+                <input type="number" id="rc-away-mins" value="20" min="1" max="60" style="width:52px" title="Minutes">
+                <button class="btn btn-ghost btn-sm" id="rc-away-btn" onclick="toggleRcTimer('away')">▶ Start</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('rc','away')">↺</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <div class="card-header">Match Actions</div>
+      <div class="card-body" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="if(confirm('Reset scores, cards and clock?')) send({type:'resetScores'})">Reset Match</button>
+        <button class="btn btn-danger" onclick="if(confirm('Full reset — clears everything?')) send({type:'fullReset'})">Full Reset</button>
+      </div>
+    </div>
+
+  </div><!-- /live -->
+
+
+  <!-- ════════════════════ STYLE TAB ════════════════════ -->
+  <div class="tab-panel" id="tab-style">
+
+    <!-- Bug Container -->
+    <div class="card">
+      <div class="card-header">Bug Container</div>
+      <div class="card-body style-section">
+        <div class="style-row cols-3">
+          <div class="field">
+            <label>Background Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch">
+                <input type="color" id="s-bug-bg-color" value="#080b10" oninput="onStyleColor('bugBgColor',this.value,'s-bug-bg-color-hex')">
+              </div>
+              <span class="color-swatch-label" id="s-bug-bg-color-hex">#080b10</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Opacity — <span id="s-bug-opacity-val">92%</span></label>
+            <div class="slider-row"><input type="range" id="s-bug-opacity" min="0" max="100" value="92" oninput="onStyleSlider('bugBgOpacity',this.value,'s-bug-opacity-val','%')"></div>
+          </div>
+          <div class="field">
+            <label>Corner Radius — <span id="s-bug-radius-val">10px</span></label>
+            <div class="slider-row"><input type="range" id="s-bug-radius" min="0" max="30" value="10" oninput="onStyleSlider('bugRadius',this.value,'s-bug-radius-val','px')"></div>
+          </div>
+        </div>
+        <div class="style-row cols-2">
+          <div class="toggle-item on" id="toggle-strip" onclick="onStyleToggle('showStrip')">
+            <span class="toggle-label">Show Colour Strip</span><div class="toggle-switch"></div>
+          </div>
+          <div class="field">
+            <label>Strip Height — <span id="s-strip-h-val">4px</span></label>
+            <div class="slider-row"><input type="range" id="s-strip-h" min="1" max="12" value="4" oninput="onStyleSlider('stripHeight',this.value,'s-strip-h-val','px')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Names -->
+    <div class="card">
+      <div class="card-header">Team Names</div>
+      <div class="card-body style-section">
+        <div class="field">
+          <label>Font</label>
+          <select class="font-select" id="name-font-picker" onchange="onStyleFont('nameFont', this.value)">
+            <option value="Barlow Condensed">Barlow Condensed</option>
+            <option value="Barlow Semi Condensed">Barlow Semi Condensed</option>
+            <option value="Bebas Neue">Bebas Neue</option>
+            <option value="Anton">Anton</option>
+            <option value="Oswald">Oswald</option>
+            <option value="Teko">Teko</option>
+            <option value="Squada One">Squada One</option>
+            <option value="Fjalla One">Fjalla One</option>
+            <option value="Russo One">Russo One</option>
+            <option value="Rajdhani">Rajdhani</option>
+            <option value="Exo 2">Exo 2</option>
+            <option value="Saira Condensed">Saira Condensed</option>
+            <option value="Saira Extra Condensed">Saira Extra Condensed</option>
+            <option value="Kanit">Kanit</option>
+            <option value="Chakra Petch">Chakra Petch</option>
+            <option value="Changa">Changa</option>
+            <option value="Titillium Web">Titillium Web</option>
+            <option value="Yantramanav">Yantramanav</option>
+            <option value="Orbitron">Orbitron</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Roboto Condensed">Roboto Condensed</option>
+            <option value="Inter">Inter</option>
+          </select>
+        </div>
+        <div class="style-row cols-4">
+          <div class="field">
+            <label>Size — <span id="s-name-size-val">22px</span></label>
+            <div class="slider-row"><input type="range" id="s-name-size" min="12" max="48" value="22" oninput="onStyleSlider('nameSize',this.value,'s-name-size-val','px',true)"></div>
+          </div>
+          <div class="field">
+            <label>Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch">
+                <input type="color" id="s-name-color" value="#ffffff" oninput="onStyleColor('nameColor',this.value,'s-name-color-hex')">
+              </div>
+              <span class="color-swatch-label" id="s-name-color-hex">#ffffff</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Name Padding — <span id="s-name-pad-h-val">8px</span></label>
+            <div class="slider-row"><input type="range" id="s-name-pad-h" min="4" max="40" value="8" oninput="onStyleSlider('namePadH',this.value,'s-name-pad-h-val','px',true)"></div>
+          </div>
+          <div class="toggle-item on" id="toggle-short-name" onclick="onStyleToggle('useShortName')" style="align-self:flex-end">
+            <span class="toggle-label">Use Short Name</span><div class="toggle-switch"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score Boxes -->
+    <div class="card">
+      <div class="card-header">Score Boxes</div>
+      <div class="card-body style-section">
+        <div class="field" style="margin-bottom:10px">
+          <label>Score Font</label>
+          <select class="font-select" id="score-font-picker" onchange="onStyleFont('scoreFont', this.value)">
+            <option value="Bebas Neue">Bebas Neue</option>
+            <option value="Barlow Condensed">Barlow Condensed</option>
+            <option value="Barlow Semi Condensed">Barlow Semi Condensed</option>
+            <option value="Anton">Anton</option>
+            <option value="Oswald">Oswald</option>
+            <option value="Teko">Teko</option>
+            <option value="Squada One">Squada One</option>
+            <option value="Fjalla One">Fjalla One</option>
+            <option value="Russo One">Russo One</option>
+            <option value="Rajdhani">Rajdhani</option>
+            <option value="Exo 2">Exo 2</option>
+            <option value="Saira Condensed">Saira Condensed</option>
+            <option value="Saira Extra Condensed">Saira Extra Condensed</option>
+            <option value="Kanit">Kanit</option>
+            <option value="Chakra Petch">Chakra Petch</option>
+            <option value="Changa">Changa</option>
+            <option value="Titillium Web">Titillium Web</option>
+            <option value="Yantramanav">Yantramanav</option>
+            <option value="Orbitron">Orbitron</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Roboto Condensed">Roboto Condensed</option>
+            <option value="Inter">Inter</option>
+          </select>
+        </div>
+        <div class="style-row cols-4">
+          <div class="field">
+            <label>Score Size — <span id="s-score-size-val">42px</span></label>
+            <div class="slider-row"><input type="range" id="s-score-size" min="20" max="80" value="42" oninput="onStyleSlider('scoreSize',this.value,'s-score-size-val','px',true)"></div>
+          </div>
+          <div class="field">
+            <label>Text Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch">
+                <input type="color" id="s-score-color" value="#ffffff" oninput="onStyleColor('scoreColor',this.value,'s-score-color-hex')">
+              </div>
+              <span class="color-swatch-label" id="s-score-color-hex">#ffffff</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Box Background</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch">
+                <input type="color" id="s-score-box-bg" value="#13171f" oninput="onStyleColor('scoreBoxBg',this.value,'s-score-box-bg-hex')">
+              </div>
+              <span class="color-swatch-label" id="s-score-box-bg-hex">#13171f</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Box Radius — <span id="s-score-radius-val">7px</span></label>
+            <div class="slider-row"><input type="range" id="s-score-radius" min="0" max="30" value="7" oninput="onStyleSlider('scoreBoxRadius',this.value,'s-score-radius-val','px')"></div>
+          </div>
+        </div>
+        <div class="style-row cols-2">
+          <div class="toggle-item on" id="toggle-flash" onclick="onStyleToggle('showFlash')" style="align-self:center">
+            <span class="toggle-label">Score Flash on Goal</span><div class="toggle-switch"></div>
+          </div>
+          <div class="field">
+            <label>Flash Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch"><input type="color" id="s-flash-color" value="#ffd700" oninput="onStyleColor('flashColor',this.value,'s-flash-color-hex')"></div>
+              <span class="color-swatch-label" id="s-flash-color-hex">#ffd700</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logo Presentation -->
+    <div class="card">
+      <div class="card-header">Logo Presentation</div>
+      <div class="card-body style-section">
+        <div class="row-2">
+          <!-- Home -->
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Home</div>
+            <div style="display:flex;gap:7px;margin-bottom:8px;align-items:center">
+              <button class="btn btn-ghost btn-sm" id="home-logo-mode-circle" onclick="setTeamLogoMode('home','circle')">● Circle</button>
+              <button class="btn btn-ghost btn-sm" id="home-logo-mode-bg"     onclick="setTeamLogoMode('home','background')">▩ Background</button>
+              <div class="toggle-item" id="home-logo-invert" onclick="toggleTeamLogoInvert('home')" style="margin-left:auto;font-size:11px">
+                <span class="toggle-label" style="font-size:11px">Invert</span><div class="toggle-switch"></div>
+              </div>
+            </div>
+            <div id="home-logo-bg-controls" style="display:none">
+              <div class="field" style="margin-bottom:6px">
+                <label>Scale — <span id="home-logo-bg-scale-val">1.5×</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-scale" min="50" max="400" value="150" oninput="onTeamLogoBgScale('home',this.value)"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Opacity — <span id="home-logo-bg-opacity-val">40%</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-opacity" min="0" max="100" value="40" oninput="onTeamLogoProp('home','logoBgOpacity',this.value,'home-logo-bg-opacity-val','%')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>X Offset — <span id="home-logo-bg-x-val">0%</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-x" min="-100" max="100" value="0" oninput="onTeamLogoProp('home','logoBgX',this.value,'home-logo-bg-x-val','%')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Y Offset — <span id="home-logo-bg-y-val">0%</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-y" min="-100" max="100" value="0" oninput="onTeamLogoProp('home','logoBgY',this.value,'home-logo-bg-y-val','%')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Rotation — <span id="home-logo-bg-rot-val">0°</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-rot" min="-180" max="180" value="0" oninput="onTeamLogoProp('home','logoBgRotation',this.value,'home-logo-bg-rot-val','°')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Vignette Start — <span id="home-logo-bg-fade-start-val">50%</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-fade-start" min="0" max="100" value="50" oninput="onTeamLogoProp('home','logoBgFadeStart',this.value,'home-logo-bg-fade-start-val','%')"></div>
+              </div>
+              <div class="field">
+                <label>Vignette End — <span id="home-logo-bg-fade-end-val">100%</span></label>
+                <div class="slider-row"><input type="range" id="home-logo-bg-fade-end" min="0" max="100" value="100" oninput="onTeamLogoProp('home','logoBgFadeEnd',this.value,'home-logo-bg-fade-end-val','%')"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Away -->
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Away</div>
+            <div style="display:flex;gap:7px;margin-bottom:8px;align-items:center">
+              <button class="btn btn-ghost btn-sm" id="away-logo-mode-circle" onclick="setTeamLogoMode('away','circle')">● Circle</button>
+              <button class="btn btn-ghost btn-sm" id="away-logo-mode-bg"     onclick="setTeamLogoMode('away','background')">▩ Background</button>
+              <div class="toggle-item" id="away-logo-invert" onclick="toggleTeamLogoInvert('away')" style="margin-left:auto;font-size:11px">
+                <span class="toggle-label" style="font-size:11px">Invert</span><div class="toggle-switch"></div>
+              </div>
+            </div>
+            <div id="away-logo-bg-controls" style="display:none">
+              <div class="field" style="margin-bottom:6px">
+                <label>Scale — <span id="away-logo-bg-scale-val">1.5×</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-scale" min="50" max="400" value="150" oninput="onTeamLogoBgScale('away',this.value)"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Opacity — <span id="away-logo-bg-opacity-val">40%</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-opacity" min="0" max="100" value="40" oninput="onTeamLogoProp('away','logoBgOpacity',this.value,'away-logo-bg-opacity-val','%')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>X Offset — <span id="away-logo-bg-x-val">0%</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-x" min="-100" max="100" value="0" oninput="onTeamLogoProp('away','logoBgX',this.value,'away-logo-bg-x-val','%')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Y Offset — <span id="away-logo-bg-y-val">0%</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-y" min="-100" max="100" value="0" oninput="onTeamLogoProp('away','logoBgY',this.value,'away-logo-bg-y-val','%')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Rotation — <span id="away-logo-bg-rot-val">0°</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-rot" min="-180" max="180" value="0" oninput="onTeamLogoProp('away','logoBgRotation',this.value,'away-logo-bg-rot-val','°')"></div>
+              </div>
+              <div class="field" style="margin-bottom:6px">
+                <label>Vignette Start — <span id="away-logo-bg-fade-start-val">50%</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-fade-start" min="0" max="100" value="50" oninput="onTeamLogoProp('away','logoBgFadeStart',this.value,'away-logo-bg-fade-start-val','%')"></div>
+              </div>
+              <div class="field">
+                <label>Vignette End — <span id="away-logo-bg-fade-end-val">100%</span></label>
+                <div class="slider-row"><input type="range" id="away-logo-bg-fade-end" min="0" max="100" value="100" oninput="onTeamLogoProp('away','logoBgFadeEnd',this.value,'away-logo-bg-fade-end-val','%')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Panel -->
+    <div class="card">
+      <div class="card-header">Card Panel</div>
+      <div class="card-body style-section">
+        <div class="style-row cols-2">
+          <div class="field">
+            <label>Position</label>
+            <div style="display:flex;gap:7px;margin-top:6px">
+              <button class="btn btn-ghost btn-sm" id="cp-pos-top"    onclick="onStyleStr('cardPanelPosition','top')">▲ Top</button>
+              <button class="btn btn-ghost btn-sm" id="cp-pos-bottom" onclick="onStyleStr('cardPanelPosition','bottom')">▼ Bottom</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Card Scale — <span id="cp-scale-val">1.0×</span></label>
+            <div class="slider-row"><input type="range" id="cp-scale" min="50" max="250" value="100" oninput="onCpScale(this.value)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clock & Period -->
+    <div class="card">
+      <div class="card-header">Clock &amp; Period</div>
+      <div class="card-body style-section">
+        <div class="style-row cols-2">
+          <div class="field">
+            <label>Clock Panel Side</label>
+            <div style="display:flex;gap:7px;margin-top:6px">
+              <button class="btn btn-ghost btn-sm" id="clock-side-left"  onclick="setClockSide('left')">◀ Left</button>
+              <button class="btn btn-ghost btn-sm" id="clock-side-right" onclick="setClockSide('right')">Right ▶</button>
+            </div>
+          </div>
+          <div class="toggle-item on" id="toggle-ext-period" onclick="onExtClockToggle('showPeriod')" style="align-self:flex-end">
+            <span class="toggle-label">Show Period Label</span><div class="toggle-switch"></div>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Clock Font</label>
+          <select class="font-select" id="clock-font-picker" onchange="onStyleFont('clockFont', this.value)">
+            <option value="Bebas Neue">Bebas Neue</option>
+            <option value="Barlow Condensed">Barlow Condensed</option>
+            <option value="Barlow Semi Condensed">Barlow Semi Condensed</option>
+            <option value="Anton">Anton</option>
+            <option value="Oswald">Oswald</option>
+            <option value="Teko">Teko</option>
+            <option value="Squada One">Squada One</option>
+            <option value="Fjalla One">Fjalla One</option>
+            <option value="Russo One">Russo One</option>
+            <option value="Rajdhani">Rajdhani</option>
+            <option value="Exo 2">Exo 2</option>
+            <option value="Saira Condensed">Saira Condensed</option>
+            <option value="Saira Extra Condensed">Saira Extra Condensed</option>
+            <option value="Kanit">Kanit</option>
+            <option value="Chakra Petch">Chakra Petch</option>
+            <option value="Changa">Changa</option>
+            <option value="Titillium Web">Titillium Web</option>
+            <option value="Yantramanav">Yantramanav</option>
+            <option value="Orbitron">Orbitron</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Roboto Condensed">Roboto Condensed</option>
+            <option value="Inter">Inter</option>
+          </select>
+        </div>
+        <div class="style-row cols-2" style="margin-bottom:10px">
+          <div class="field">
+            <label>Clock Panel Background</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch"><input type="color" id="s-clock-bg-color" value="#080b10" oninput="onStyleColor('clockBgColor',this.value,'s-clock-bg-color-hex')"></div>
+              <span class="color-swatch-label" id="s-clock-bg-color-hex">#080b10</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Clock Panel Opacity — <span id="s-clock-bg-opacity-val">92%</span></label>
+            <div class="slider-row"><input type="range" id="s-clock-bg-opacity" min="0" max="100" value="92" oninput="onStyleSlider('clockBgOpacity',this.value,'s-clock-bg-opacity-val','%')"></div>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>H Padding — <span id="s-clock-pad-h-val">16px</span></label>
+          <div class="slider-row"><input type="range" id="s-clock-pad-h" min="4" max="60" value="16" oninput="onStyleSlider('clockPadH',this.value,'s-clock-pad-h-val','px')"></div>
+        </div>
+        <div class="style-row cols-4">
+          <div class="field">
+            <label>Clock Size — <span id="s-clock-size-val">28px</span></label>
+            <div class="slider-row"><input type="range" id="s-clock-size" min="12" max="80" value="28" oninput="onStyleSlider('clockSize',this.value,'s-clock-size-val','px')"></div>
+          </div>
+          <div class="field">
+            <label>Clock Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch"><input type="color" id="s-clock-color" value="#a8b5c8" oninput="onStyleColor('clockColor',this.value,'s-clock-color-hex')"></div>
+              <span class="color-swatch-label" id="s-clock-color-hex">#a8b5c8</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Running Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch"><input type="color" id="s-clock-run-color" value="#4ade80" oninput="onStyleColor('clockRunningColor',this.value,'s-clock-run-color-hex')"></div>
+              <span class="color-swatch-label" id="s-clock-run-color-hex">#4ade80</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Overtime Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch"><input type="color" id="s-clock-ot-color" value="#e63946" oninput="onStyleColor('clockOvertimeColor',this.value,'s-clock-ot-color-hex')"></div>
+              <span class="color-swatch-label" id="s-clock-ot-color-hex">#e63946</span>
+            </div>
+          </div>
+        </div>
+        <div class="style-row cols-3">
+          <div class="field">
+            <label>Period Label Size — <span id="s-period-size-val">13px</span></label>
+            <div class="slider-row"><input type="range" id="s-period-size" min="8" max="28" value="13" oninput="onStyleSlider('periodSize',this.value,'s-period-size-val','px')"></div>
+          </div>
+          <div class="field">
+            <label>Period Label Colour</label>
+            <div class="color-swatch-wrap" style="margin-top:4px">
+              <div class="color-swatch"><input type="color" id="s-period-color" value="#667388" oninput="onStyleColor('periodColor',this.value,'s-period-color-hex')"></div>
+              <span class="color-swatch-label" id="s-period-color-hex">#667388</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Position & Scale -->
+    <div class="card">
+      <div class="card-header">Position &amp; Scale</div>
+      <div class="card-body style-section">
+        <div class="style-row cols-2">
+          <div class="field">
+            <label>Position Preset</label>
+            <div class="pos-grid" style="margin-top:6px">
+              <button class="btn btn-ghost btn-sm" onclick="setPosition('tl')">↖ Top L</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPosition('tc')">↑ Top C</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPosition('tr')">↗ Top R</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPosition('bl')">↙ Bot L</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPosition('bc')">↓ Bot C</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPosition('br')">↘ Bot R</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Scale — <span id="scale-label">1.0×</span></label>
+            <div class="slider-row" style="margin-top:6px">
+              <input type="range" id="scale-slider" min="30" max="250" value="100" oninput="onScaleSlider(this.value)">
+              <button class="btn btn-ghost btn-sm" onclick="resetScale()">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="style-row cols-2">
+          <div class="field">
+            <label>X Position — <span id="pos-x-val">20px</span></label>
+            <div class="slider-row">
+              <input type="range" id="pos-x-slider" min="0" max="1900" value="20" oninput="onPosSlider('x', this.value)">
+              <input type="number" id="pos-x-num" min="0" max="1900" value="20" style="width:70px" oninput="onPosNum('x', this.value)">
+            </div>
+          </div>
+          <div class="field">
+            <label>Y Position — <span id="pos-y-val">20px</span></label>
+            <div class="slider-row">
+              <input type="range" id="pos-y-slider" min="0" max="1060" value="20" oninput="onPosSlider('y', this.value)">
+              <input type="number" id="pos-y-num" min="0" max="1060" value="20" style="width:70px" oninput="onPosNum('y', this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Display Elements -->
+    <div class="card">
+      <div class="card-header">Show / Hide Elements</div>
+      <div class="card-body">
+        <div class="toggle-grid">
+          <div class="toggle-item" id="toggle-clock"  onclick="toggleDisplay('showClock')"><span class="toggle-label">Clock Panel</span><div class="toggle-switch"></div></div>
+          <div class="toggle-item" id="toggle-cards"  onclick="toggleDisplay('showCards')"><span class="toggle-label">Cards</span><div class="toggle-switch"></div></div>
+          <div class="toggle-item" id="toggle-logos"  onclick="toggleDisplay('showLogos')"><span class="toggle-label">Logos</span><div class="toggle-switch"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /style -->
+
+
+  <!-- ════════════════════ PROFILES TAB ════════════════════ -->
+  <div class="tab-panel" id="tab-profiles">
+
+    <!-- Save form -->
+    <div class="card">
+      <div class="card-header">Save Profile</div>
+      <div class="card-body save-form">
+        <div class="field">
+          <label>Profile Name</label>
+          <input type="text" id="profile-name" placeholder="e.g. Ospreys vs Scarlets">
+        </div>
+        <div class="field">
+          <label>Save Type</label>
+          <div class="save-type-grid">
+            <button class="save-type-btn active" id="save-type-match" onclick="setSaveType('match')">
+              Match Setup
+              <small>Teams, sport &amp; colours</small>
+            </button>
+            <button class="save-type-btn" id="save-type-style" onclick="setSaveType('style')">
+              Style Only
+              <small>Visual settings &amp; position</small>
+            </button>
+            <button class="save-type-btn" id="save-type-full" onclick="setSaveType('full')">
+              Full Profile
+              <small>Match + style combined</small>
+            </button>
+          </div>
+        </div>
+        <div id="include-style-wrap" style="display:none">
+          <div class="toggle-item" id="toggle-include-style" onclick="toggleIncludeStyle()">
+            <span class="toggle-label">Include style settings in this match profile</span>
+            <div class="toggle-switch"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+      </div>
+    </div>
+
+    <!-- Saved profiles -->
+    <div class="card">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+        Saved Profiles
+        <button class="btn btn-ghost btn-sm" onclick="loadProfileList()">↺ Refresh</button>
+      </div>
+      <div class="card-body">
+        <div class="profile-list" id="profile-list">
+          <div class="no-profiles">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /profiles -->
+
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+// ── State & WebSocket ──────────────────────────────────────────────────
+let state = null, sports = {};
+let ws;
+let debounce = {};
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen = () => {
+    document.getElementById('status-dot').classList.add('connected');
+    document.getElementById('status-text').textContent = 'Connected';
+  };
+  ws.onclose = () => {
+    document.getElementById('status-dot').classList.remove('connected');
+    document.getElementById('status-text').textContent = 'Disconnected';
+    setTimeout(connect, 2000);
+  };
+  ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state') { state = msg.data; sports = msg.sports; applyState(); }
+    else if (msg.type === 'clockTick') { updateClockDisplay(msg.elapsed, msg.running); }
+  };
+}
+
+function send(action) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(action));
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-btn-${name}`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'profiles') loadProfileList();
+}
+
+// ── Apply full state ───────────────────────────────────────────────────
+function applyState() {
+  if (!state) return;
+  const sport = sports[state.sport] || {};
+  const d = state.display;
+  const bs = state.bugStyle || {};
+
+  // Sport buttons
+  renderSportButtons();
+  renderMatchLengthUI(state.sport);
+
+  // Teams
+  syncTeamUI('home', state.home);
+  syncTeamUI('away', state.away);
+
+  // Scores
+  document.getElementById('home-score-display').textContent = state.home.score;
+  document.getElementById('away-score-display').textContent = state.away.score;
+  renderScoreButtons('home', sport.scoreButtons || []);
+  renderScoreButtons('away', sport.scoreButtons || []);
+
+  const hn = state.home.name || 'Home';
+  const an = state.away.name || 'Away';
+  document.getElementById('score-home-label').textContent = hn;
+  document.getElementById('score-away-label').textContent = an;
+  document.getElementById('cards-home-label').textContent = hn;
+  document.getElementById('cards-away-label').textContent = an;
+  document.getElementById('yc-home-label').textContent = hn;
+  document.getElementById('yc-away-label').textContent = an;
+  document.getElementById('rc-home-label').textContent = hn;
+  document.getElementById('rc-away-label').textContent = an;
+
+  // Clock
+  updateClockDisplay(state.clock.elapsed, state.clock.running);
+  document.getElementById('clock-start-btn').textContent = state.clock.running ? '⏸ Running…' : '▶ Start';
+
+  // Period
+  const pNames = sport.periodNames;
+  const pLabel = pNames && pNames[state.period - 1] ? pNames[state.period - 1] : `Period ${state.period}`;
+  document.getElementById('period-display').textContent = pLabel;
+
+  // Cards
+  document.getElementById('cards-section').style.display = sport.hasCards ? '' : 'none';
+  renderCardPips('home', state.home.yellowCards, state.home.redCards);
+  renderCardPips('away', state.away.yellowCards, state.away.redCards);
+
+  // Display toggles
+  setToggle('toggle-clock',  d.showClock);
+  setToggle('toggle-cards',  d.showCards);
+  setToggle('toggle-logos',  d.showLogos);
+
+  // Visibility
+  const vis = d.visible;
+  const vt = document.getElementById('vis-toggle');
+  vt.className = 'vis-toggle ' + (vis ? 'visible' : 'hidden-overlay');
+  document.getElementById('vis-text').textContent = vis ? 'Overlay Visible' : 'Overlay Hidden';
+
+  // Scale
+  const scale = state.scale ?? 1.0;
+  document.getElementById('scale-slider').value = Math.round(scale * 100);
+  document.getElementById('scale-label').textContent = scale.toFixed(1) + '×';
+
+  // Position
+  const px = state.position?.x ?? 20;
+  const py = state.position?.y ?? 20;
+  document.getElementById('pos-x-slider').value = px;
+  document.getElementById('pos-x-num').value    = px;
+  document.getElementById('pos-x-val').textContent = px + 'px';
+  document.getElementById('pos-y-slider').value = py;
+  document.getElementById('pos-y-num').value    = py;
+  document.getElementById('pos-y-val').textContent = py + 'px';
+
+  // Style tab sync
+  syncStyleUI(bs);
+  syncClockPanelUI(state.externalClock || {});
+}
+
+function syncTeamUI(team, data) {
+  const nameEl = document.getElementById(`${team}-name`);
+  if (document.activeElement !== nameEl) nameEl.value = data.name || '';
+
+  const shortEl = document.getElementById(`${team}-short-name`);
+  if (document.activeElement !== shortEl) shortEl.value = (data.shortName || '').toUpperCase();
+
+  const color = data.color || '#ffffff';
+  document.getElementById(`${team}-color-input`).value   = color;
+  document.getElementById(`${team}-color-input2`).value  = color;
+  document.getElementById(`${team}-color-swatch`).style.background  = color;
+  document.getElementById(`${team}-color-big`).style.background     = color;
+  document.getElementById(`${team}-color-hex`).textContent          = color;
+
+  const logoImg   = document.getElementById(`${team}-logo-img`);
+  const logoPlaceholder = document.getElementById(`${team}-logo-placeholder`);
+  const removeBtn = document.getElementById(`${team}-remove-logo`);
+  const hadLogo = logoImg.src && !logoImg.src.endsWith('/');
+  if (data.logo) {
+    if (logoImg.src !== location.origin + data.logo) {
+      logoImg.src = data.logo;
+      extractLogoColors(team, data.logo);
+    }
+    logoImg.style.display = ''; logoPlaceholder.style.display = 'none'; removeBtn.style.display = '';
+  } else {
+    logoImg.style.display = 'none'; logoPlaceholder.style.display = ''; removeBtn.style.display = 'none';
+    extractLogoColors(team, null);
+  }
+  syncTeamLogoUI(team, data);
+}
+
+function syncTeamLogoUI(team, data) {
+  const mode = data.logoMode || 'circle';
+  const circBtn = document.getElementById(`${team}-logo-mode-circle`);
+  const bgBtn   = document.getElementById(`${team}-logo-mode-bg`);
+  const bgCtrls = document.getElementById(`${team}-logo-bg-controls`);
+  if (circBtn) { circBtn.classList.toggle('btn-primary', mode === 'circle');     circBtn.classList.toggle('btn-ghost', mode !== 'circle'); }
+  if (bgBtn)   { bgBtn.classList.toggle('btn-primary',   mode === 'background'); bgBtn.classList.toggle('btn-ghost',   mode !== 'background'); }
+  if (bgCtrls) bgCtrls.style.display = mode === 'background' ? 'block' : 'none';
+
+  setToggle(`${team}-logo-invert`, data.logoInvert || false);
+
+  const scaleEl = document.getElementById(`${team}-logo-bg-scale`);
+  if (scaleEl) {
+    scaleEl.value = Math.round((data.logoBgScale || 1.5) * 100);
+    document.getElementById(`${team}-logo-bg-scale-val`).textContent = (data.logoBgScale || 1.5).toFixed(1) + '×';
+  }
+  const setSRt = (id, labelId, val, suffix) => {
+    const el = document.getElementById(id); if (el) el.value = val;
+    const lbl = document.getElementById(labelId); if (lbl) lbl.textContent = val + suffix;
+  };
+  setSRt(`${team}-logo-bg-opacity`,    `${team}-logo-bg-opacity-val`,    data.logoBgOpacity ?? 40, '%');
+  setSRt(`${team}-logo-bg-x`,          `${team}-logo-bg-x-val`,          data.logoBgX ?? 0, '%');
+  setSRt(`${team}-logo-bg-y`,          `${team}-logo-bg-y-val`,          data.logoBgY ?? 0, '%');
+  setSRt(`${team}-logo-bg-rot`,        `${team}-logo-bg-rot-val`,        data.logoBgRotation ?? 0, '°');
+  setSRt(`${team}-logo-bg-fade-start`, `${team}-logo-bg-fade-start-val`, data.logoBgFadeStart ?? 50, '%');
+  setSRt(`${team}-logo-bg-fade-end`,   `${team}-logo-bg-fade-end-val`,   data.logoBgFadeEnd ?? 100, '%');
+}
+
+function syncStyleUI(bs) {
+  // Bug container
+  setSC('s-bug-bg-color', 's-bug-bg-color-hex', bs.bugBgColor || '#080b10');
+  setSR('s-bug-opacity',  's-bug-opacity-val',  bs.bugBgOpacity ?? 92, '%');
+  setSR('s-bug-radius',   's-bug-radius-val',   bs.bugRadius ?? 10, 'px');
+  setToggle('toggle-strip', bs.showStrip !== false);
+  setSR('s-strip-h', 's-strip-h-val', bs.stripHeight || 4, 'px');
+
+  // Names
+  setSC('s-name-color', 's-name-color-hex', bs.nameColor || '#ffffff');
+  setSR('s-name-size',  's-name-size-val',  bs.nameSize || 22, 'px');
+  syncFontPicker('name-font-picker', bs.nameFont || 'Barlow Condensed');
+  setToggle('toggle-short-name', bs.useShortName !== false);
+
+  // Scores
+  setSR('s-score-size',   's-score-size-val',   bs.scoreSize || 42, 'px');
+  setSC('s-score-color',  's-score-color-hex',  bs.scoreColor || '#ffffff');
+  setSC('s-score-box-bg', 's-score-box-bg-hex', bs.scoreBoxBg || '#13171f');
+  setSR('s-score-radius', 's-score-radius-val', bs.scoreBoxRadius ?? 7, 'px');
+
+  // Clock
+  setSR('s-clock-size',     's-clock-size-val',     bs.clockSize || 28, 'px');
+  setSC('s-clock-color',    's-clock-color-hex',    bs.clockColor        || '#a8b5c8');
+  setSC('s-clock-run-color','s-clock-run-color-hex',bs.clockRunningColor || '#4ade80');
+  setSC('s-clock-ot-color', 's-clock-ot-color-hex', bs.clockOvertimeColor || '#e63946');
+  setSR('s-period-size',    's-period-size-val',    bs.periodSize || 13, 'px');
+  setSC('s-period-color',   's-period-color-hex',   bs.periodColor || '#667388');
+
+  // Flash
+  setToggle('toggle-flash', bs.showFlash !== false);
+  setSC('s-flash-color', 's-flash-color-hex', bs.flashColor || '#ffd700');
+
+  // Score font
+  syncFontPicker('score-font-picker', bs.scoreFont || 'Bebas Neue');
+
+  // Clock font
+  syncFontPicker('clock-font-picker', bs.clockFont || 'Bebas Neue');
+
+  // Clock panel background
+  const clockBgColor = bs.clockBgColor || bs.bugBgColor || '#080b10';
+  setSC('s-clock-bg-color', 's-clock-bg-color-hex', clockBgColor);
+  setSR('s-clock-bg-opacity', 's-clock-bg-opacity-val', bs.clockBgOpacity ?? bs.bugBgOpacity ?? 92, '%');
+  setSR('s-clock-pad-h', 's-clock-pad-h-val', bs.clockPadH ?? 16, 'px');
+
+  // Name padding
+  setSR('s-name-pad-h', 's-name-pad-h-val', bs.namePadH ?? 8, 'px');
+
+  // Card panel
+  const cpPos = bs.cardPanelPosition || 'bottom';
+  const cpTop = document.getElementById('cp-pos-top');
+  const cpBot = document.getElementById('cp-pos-bottom');
+  if (cpTop) { cpTop.classList.toggle('btn-primary', cpPos === 'top'); cpTop.classList.toggle('btn-ghost', cpPos !== 'top'); }
+  if (cpBot) { cpBot.classList.toggle('btn-primary', cpPos === 'bottom'); cpBot.classList.toggle('btn-ghost', cpPos !== 'bottom'); }
+  const cpScaleEl = document.getElementById('cp-scale');
+  if (cpScaleEl) {
+    cpScaleEl.value = Math.round((bs.cardPanelScale || 1) * 100);
+    document.getElementById('cp-scale-val').textContent = (bs.cardPanelScale || 1).toFixed(1) + '×';
+  }
+}
+
+function syncClockPanelUI(ec) {
+  setToggle('toggle-ext-period', ec.showPeriod !== false);
+  const side = ec.side || 'right';
+  document.getElementById('clock-side-left').classList.toggle('btn-primary',  side === 'left');
+  document.getElementById('clock-side-left').classList.toggle('btn-ghost',    side !== 'left');
+  document.getElementById('clock-side-right').classList.toggle('btn-primary', side === 'right');
+  document.getElementById('clock-side-right').classList.toggle('btn-ghost',   side !== 'right');
+}
+
+// helpers for syncing style inputs
+function setSR(sliderId, labelId, val, suffix) {
+  const el = document.getElementById(sliderId);
+  if (el) el.value = val;
+  const lbl = document.getElementById(labelId);
+  if (lbl) lbl.textContent = val + suffix;
+}
+function setSC(inputId, labelId, hex) {
+  const el = document.getElementById(inputId);
+  if (el) el.value = hex;
+  const swatch = el && el.closest('.color-swatch');
+  if (swatch) swatch.style.background = hex;
+  const lbl = document.getElementById(labelId);
+  if (lbl) lbl.textContent = hex;
+}
+function syncFontPicker(pickerId, font) {
+  const el = document.getElementById(pickerId);
+  if (!el) return;
+  el.value = font;
+  if (el.value !== font) el.selectedIndex = 0;
+}
+
+function renderSportButtons() {
+  const grid = document.getElementById('sport-grid');
+  grid.innerHTML = '';
+  Object.entries(sports).forEach(([key, s]) => {
+    const btn = document.createElement('button');
+    btn.className = 'sport-btn' + (state.sport === key ? ' active' : '');
+    btn.textContent = s.name;
+    btn.onclick = () => send({ type: 'setSport', sport: key });
+    grid.appendChild(btn);
+  });
+}
+
+function renderScoreButtons(team, buttons) {
+  const container = document.getElementById(`${team}-score-btns`);
+  container.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'score-inc-btn';
+    btn.innerHTML = `<span class="val">+${b.value}</span><span>${b.label}</span>`;
+    btn.onclick = () => send({ type: 'updateScore', team, delta: b.value });
+    container.appendChild(btn);
+  });
+}
+
+function renderCardPips(team, yellow, red) {
+  ['yellow', 'red'].forEach(type => {
+    const el = document.getElementById(`${team}-${type}-pips`);
+    const count = type === 'yellow' ? yellow : red;
+    const max   = type === 'yellow' ? 3 : 2;
+    el.innerHTML = '';
+    for (let i = 0; i < max; i++) {
+      const d = document.createElement('div');
+      d.className = `card-pip ${type}${i < count ? ' active' : ''}`;
+      el.appendChild(d);
+    }
+  });
+}
+
+function fmtClock(elapsed) {
+  const s = Math.floor(Math.abs(elapsed));
+  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+}
+
+function getEffectiveDurations(sport, periodMins) {
+  const durs = [...(sport.periodDurations || [])];
+  if (periodMins != null && periodMins > 0) {
+    const regular = sport.periods || 2;
+    for (let i = 0; i < regular; i++) durs[i] = periodMins * 60;
+  }
+  return durs;
+}
+
+function periodStartSecs(durs, periodIdx) {
+  let s = 0;
+  for (let i = 0; i < periodIdx; i++) s += (durs[i] || 0);
+  return s;
+}
+
+function isClockOvertime(elapsed) {
+  if (!state) return false;
+  const sport = sports[state.sport] || {};
+  const periodIdx = (state.period || 1) - 1;
+  const durs = getEffectiveDurations(sport, state.periodMins);
+  const dur  = durs[periodIdx];
+  if (dur == null) return false;
+  if (sport.clockDirection === 'down') return elapsed <= 0;
+  return elapsed > periodStartSecs(durs, periodIdx) + dur;
+}
+
+function updateClockDisplay(elapsed, running) {
+  const el = document.getElementById('clock-display');
+  const ot = isClockOvertime(elapsed);
+  el.textContent = fmtClock(elapsed);
+  el.classList.toggle('running', running && !ot);
+  el.style.color = ot ? 'var(--red)' : '';
+}
+
+function setToggle(id, on) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('on', !!on);
+}
+
+// ── Live actions ───────────────────────────────────────────────────────
+let colorDebounce = {};
+
+function onColorChange(team, value) {
+  document.getElementById(`${team}-color-swatch`).style.background = value;
+  document.getElementById(`${team}-color-big`).style.background    = value;
+  document.getElementById(`${team}-color-hex`).textContent         = value;
+  document.getElementById(`${team}-color-input`).value             = value;
+  document.getElementById(`${team}-color-input2`).value            = value;
+  clearTimeout(colorDebounce[team]);
+  colorDebounce[team] = setTimeout(() => send({ type: 'updateTeam', team, data: { color: value } }), 120);
+}
+
+function onTeamFieldChange(team, field, value) {
+  clearTimeout(debounce[team + field]);
+  debounce[team + field] = setTimeout(() => send({ type: 'updateTeam', team, data: { [field]: value } }), 280);
+}
+
+function toggleVisibility() {
+  if (!state) return;
+  send({ type: 'updateDisplay', data: { visible: !state.display.visible } });
+}
+
+function toggleDisplay(key) {
+  if (!state) return;
+  send({ type: 'updateDisplay', data: { [key]: !state.display[key] } });
+}
+
+function clockStart() { send({ type: 'clockStart' }); }
+function clockStop()  { send({ type: 'clockStop' }); }
+function clockReset() { send({ type: 'clockReset' }); }
+
+function changePeriod(delta) {
+  if (!state) return;
+  const sport = sports[state.sport] || {};
+  const max   = sport.maxPeriods || 4;
+  const newPeriod = Math.max(1, Math.min(max, (state.period || 1) + delta));
+  const durs  = getEffectiveDurations(sport, state.periodMins);
+  let elapsed;
+  if (sport.clockDirection === 'down') {
+    elapsed = durs[newPeriod - 1] || 0;
+  } else {
+    elapsed = periodStartSecs(durs, newPeriod - 1);
+  }
+  send({ type: 'changePeriod', period: newPeriod, elapsed });
+}
+
+function setClockFromInput() {
+  const min = parseInt(document.getElementById('clock-min').value) || 0;
+  const sec = parseInt(document.getElementById('clock-sec').value) || 0;
+  send({ type: 'clockSet', elapsed: min * 60 + sec });
+}
+
+// ── Style actions ──────────────────────────────────────────────────────
+function onStyleSlider(key, val, labelId, suffix, isInt) {
+  document.getElementById(labelId).textContent = val + suffix;
+  send({ type: 'updateBugStyle', data: { [key]: isInt ? parseInt(val) : parseFloat(val) } });
+}
+
+function onStyleColor(key, val, labelId) {
+  document.getElementById(labelId).textContent = val;
+  const swatch = document.getElementById(labelId.replace('-hex', '')).closest('.color-swatch');
+  if (swatch) swatch.style.background = val;
+  clearTimeout(debounce['style_' + key]);
+  debounce['style_' + key] = setTimeout(() => send({ type: 'updateBugStyle', data: { [key]: val } }), 100);
+}
+
+function onStyleFont(key, val) {
+  send({ type: 'updateBugStyle', data: { [key]: val } });
+}
+
+function onStyleToggle(key) {
+  if (!state) return;
+  const cur = state.bugStyle?.[key] !== false;
+  send({ type: 'updateBugStyle', data: { [key]: !cur } });
+}
+
+// Position & scale
+const POSITIONS = {
+  tl: { x: 20,   y: 20  },
+  tc: { x: 740,  y: 20  },
+  tr: { x: 1460, y: 20  },
+  bl: { x: 20,   y: 960 },
+  bc: { x: 740,  y: 960 },
+  br: { x: 1460, y: 960 },
+};
+
+function setPosition(preset) {
+  const p = POSITIONS[preset];
+  if (p) send({ type: 'updatePosition', x: p.x, y: p.y });
+}
+
+function onScaleSlider(val) {
+  const scale = parseFloat(val) / 100;
+  document.getElementById('scale-label').textContent = scale.toFixed(1) + '×';
+  send({ type: 'updateScale', scale });
+}
+
+function resetScale() {
+  document.getElementById('scale-slider').value = 100;
+  document.getElementById('scale-label').textContent = '1.0×';
+  send({ type: 'updateScale', scale: 1.0 });
+}
+
+let posSendTimer = null;
+function onPosSlider(axis, val) {
+  val = parseInt(val);
+  document.getElementById(`pos-${axis}-num`).value = val;
+  document.getElementById(`pos-${axis}-val`).textContent = val + 'px';
+  clearTimeout(posSendTimer);
+  posSendTimer = setTimeout(() => {
+    const x = parseInt(document.getElementById('pos-x-slider').value);
+    const y = parseInt(document.getElementById('pos-y-slider').value);
+    send({ type: 'updatePosition', x, y });
+  }, 60);
+}
+
+function onPosNum(axis, val) {
+  val = parseInt(val) || 0;
+  document.getElementById(`pos-${axis}-slider`).value = val;
+  document.getElementById(`pos-${axis}-val`).textContent = val + 'px';
+  const x = parseInt(document.getElementById('pos-x-slider').value);
+  const y = parseInt(document.getElementById('pos-y-slider').value);
+  send({ type: 'updatePosition', x, y });
+}
+
+// Clock panel controls
+function onExtClockToggle(key) {
+  if (!state) return;
+  const ec = state.externalClock || {};
+  const cur = ec[key] !== false;
+  send({ type: 'updateExternalClock', data: { [key]: !cur } });
+}
+
+function setClockSide(side) {
+  send({ type: 'updateExternalClock', data: { side } });
+}
+
+function setTeamLogoMode(team, mode) {
+  const circBtn = document.getElementById(`${team}-logo-mode-circle`);
+  const bgBtn   = document.getElementById(`${team}-logo-mode-bg`);
+  const bgCtrls = document.getElementById(`${team}-logo-bg-controls`);
+  if (circBtn) { circBtn.classList.toggle('btn-primary', mode === 'circle');     circBtn.classList.toggle('btn-ghost', mode !== 'circle'); }
+  if (bgBtn)   { bgBtn.classList.toggle('btn-primary',   mode === 'background'); bgBtn.classList.toggle('btn-ghost',   mode !== 'background'); }
+  if (bgCtrls) bgCtrls.style.display = mode === 'background' ? 'block' : 'none';
+  send({ type: 'updateTeam', team, data: { logoMode: mode } });
+}
+
+function toggleTeamLogoInvert(team) {
+  const current = state?.[team]?.logoInvert || false;
+  setToggle(`${team}-logo-invert`, !current);
+  send({ type: 'updateTeam', team, data: { logoInvert: !current } });
+}
+
+function onTeamLogoBgScale(team, val) {
+  const scale = parseFloat(val) / 100;
+  document.getElementById(`${team}-logo-bg-scale-val`).textContent = scale.toFixed(1) + '×';
+  send({ type: 'updateTeam', team, data: { logoBgScale: scale } });
+}
+
+function onTeamLogoProp(team, key, val, labelId, suffix) {
+  const num = parseFloat(val);
+  document.getElementById(labelId).textContent = num + suffix;
+  send({ type: 'updateTeam', team, data: { [key]: num } });
+}
+
+// Card panel
+function onCpScale(val) {
+  const scale = parseFloat(val) / 100;
+  document.getElementById('cp-scale-val').textContent = scale.toFixed(1) + '×';
+  send({ type: 'updateBugStyle', data: { cardPanelScale: scale } });
+}
+
+function onStyleStr(key, val) {
+  // Generic string style update + sync position buttons
+  send({ type: 'updateBugStyle', data: { [key]: val } });
+  if (key === 'cardPanelPosition') {
+    document.getElementById('cp-pos-top').classList.toggle('btn-primary',    val === 'top');
+    document.getElementById('cp-pos-top').classList.toggle('btn-ghost',      val !== 'top');
+    document.getElementById('cp-pos-bottom').classList.toggle('btn-primary', val === 'bottom');
+    document.getElementById('cp-pos-bottom').classList.toggle('btn-ghost',   val !== 'bottom');
+  }
+}
+
+// ── Match Length ───────────────────────────────────────────────────────
+const PERIOD_LENGTH_CFG = {
+  rugby_union:  { header: 'Match Length',   label: 'Total minutes',        scale: 2, def: 80, presets: [60, 70, 80] },
+  rugby_league: { header: 'Match Length',   label: 'Total minutes',        scale: 2, def: 80, presets: [60, 70, 80] },
+  football:     { header: 'Match Length',   label: 'Total minutes',        scale: 2, def: 90, presets: [60, 90] },
+  basketball:   { header: 'Quarter Length', label: 'Minutes per quarter',  scale: 1, def: 10, presets: [10, 12] },
+  ice_hockey:   { header: 'Period Length',  label: 'Minutes per period',   scale: 1, def: 20, presets: [20] },
+  netball:      { header: 'Quarter Length', label: 'Minutes per quarter',  scale: 1, def: 15, presets: [15] },
+  generic:      { header: 'Period Length',  label: 'Minutes per period',   scale: 1, def: 15, presets: [10, 15, 20, 30] },
+};
+
+function renderMatchLengthUI(sportKey) {
+  const cfg = PERIOD_LENGTH_CFG[sportKey] || PERIOD_LENGTH_CFG.generic;
+  document.getElementById('match-length-header').textContent = cfg.header.toUpperCase();
+  document.getElementById('match-length-label').textContent  = cfg.label.toUpperCase();
+
+  const container = document.getElementById('match-length-presets');
+  container.innerHTML = '';
+  cfg.presets.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-ghost btn-sm';
+    btn.textContent = p + ' min';
+    btn.onclick = () => { document.getElementById('period-mins-input').value = p; onPeriodMinsChange(p); };
+    container.appendChild(btn);
+  });
+
+  const periodMins = state?.periodMins ?? (cfg.def / cfg.scale);
+  const displayVal = Math.round(periodMins * cfg.scale);
+  document.getElementById('period-mins-input').value = displayVal;
+  updateMatchLengthDesc(cfg, periodMins);
+}
+
+function updateMatchLengthDesc(cfg, periodMins) {
+  const desc = cfg.scale === 2 ? `${periodMins} min halves` : '';
+  document.getElementById('match-length-desc').textContent = desc;
+}
+
+function onPeriodMinsChange(val) {
+  if (!state) return;
+  const cfg = PERIOD_LENGTH_CFG[state.sport] || PERIOD_LENGTH_CFG.generic;
+  const displayVal = parseInt(val) || cfg.def;
+  const periodMins = displayVal / cfg.scale;
+  updateMatchLengthDesc(cfg, periodMins);
+  send({ type: 'setPeriodMins', value: periodMins });
+}
+
+// ── Card timers (admin-side only) ──────────────────────────────────────
+const ycTimers   = { home: null, away: null };
+const ycRemaining = { home: 0,  away: 0  };
+const rcTimers    = { home: null, away: null };
+const rcRemaining = { home: 0,   away: 0   };
+
+function toggleYcTimer(team) {
+  if (ycTimers[team]) {
+    // Stop
+    clearInterval(ycTimers[team]);
+    ycTimers[team] = null;
+    document.getElementById(`yc-${team}-btn`).textContent = '▶ Start';
+  } else {
+    // Start — read minutes from input, reset remaining
+    const mins = parseInt(document.getElementById(`yc-${team}-mins`).value) || 10;
+    ycRemaining[team] = mins * 60;
+    updateYcDisplay(team);
+    document.getElementById(`yc-${team}-btn`).textContent = '⏸ Stop';
+    ycTimers[team] = setInterval(() => {
+      ycRemaining[team]--;
+      updateYcDisplay(team);
+      if (ycRemaining[team] <= 0) {
+        clearInterval(ycTimers[team]);
+        ycTimers[team] = null;
+        document.getElementById(`yc-${team}-btn`).textContent = '▶ Start';
+        // Prompt — don't auto-dismiss the card
+        const teamName = state?.[team]?.name || team;
+        toast(`⚠ Yellow card timer expired for ${teamName}!`, 8000);
+        if (Notification.permission === 'granted') {
+          new Notification('Yellow Card Timer', { body: `${teamName}'s yellow card time is up!` });
+        }
+      }
+    }, 1000);
+  }
+}
+
+function updateYcDisplay(team) {
+  const s = ycRemaining[team];
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  document.getElementById(`yc-${team}-display`).textContent =
+    `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function toggleRcTimer(team) {
+  if (rcTimers[team]) {
+    clearInterval(rcTimers[team]);
+    rcTimers[team] = null;
+    document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
+  } else {
+    const mins = parseInt(document.getElementById(`rc-${team}-mins`).value) || 20;
+    rcRemaining[team] = mins * 60;
+    updateRcDisplay(team);
+    document.getElementById(`rc-${team}-btn`).textContent = '⏸ Stop';
+    rcTimers[team] = setInterval(() => {
+      rcRemaining[team]--;
+      updateRcDisplay(team);
+      if (rcRemaining[team] <= 0) {
+        clearInterval(rcTimers[team]);
+        rcTimers[team] = null;
+        document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
+        const teamName = state?.[team]?.name || team;
+        toast(`⚠ Red card timer expired for ${teamName}!`, 8000);
+        if (Notification.permission === 'granted') {
+          new Notification('Red Card Timer', { body: `${teamName}'s temporary dismissal is up!` });
+        }
+      }
+    }, 1000);
+  }
+}
+
+function updateRcDisplay(team) {
+  const s = rcRemaining[team];
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  document.getElementById(`rc-${team}-display`).textContent =
+    `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function resetCardTimer(type, team) {
+  const timers    = type === 'yc' ? ycTimers    : rcTimers;
+  const remaining = type === 'yc' ? ycRemaining : rcRemaining;
+  if (timers[team]) { clearInterval(timers[team]); timers[team] = null; }
+  const minsEl = document.getElementById(`${type}-${team}-mins`);
+  const mins = parseInt(minsEl?.value) || (type === 'yc' ? 10 : 20);
+  remaining[team] = mins * 60;
+  if (type === 'yc') updateYcDisplay(team); else updateRcDisplay(team);
+  document.getElementById(`${type}-${team}-btn`).textContent = '▶ Start';
+}
+
+// ── Logo colour extraction ─────────────────────────────────────────────
+function extractLogoColors(team, src) {
+  const container = document.getElementById(`${team}-logo-colors`);
+  const swatchBox  = document.getElementById(`${team}-logo-color-swatches`);
+  if (!src) { container.style.display = 'none'; return; }
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    const SIZE   = 80;
+    canvas.width = canvas.height = SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, SIZE, SIZE);
+    let pixels;
+    try { pixels = ctx.getImageData(0, 0, SIZE, SIZE).data; }
+    catch { return; } // tainted canvas (cross-origin) — skip silently
+
+    // Bucket pixels into 32-step RGB buckets, ignore near-transparent and near-grey
+    const buckets = {};
+    for (let i = 0; i < pixels.length; i += 4) {
+      const a = pixels[i + 3];
+      if (a < 80) continue; // skip mostly transparent
+      const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+      // Skip near-grey (saturation check)
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      if (max - min < 30) continue; // low saturation — skip
+      const key = `${Math.round(r/32)*32},${Math.round(g/32)*32},${Math.round(b/32)*32}`;
+      buckets[key] = (buckets[key] || 0) + 1;
+    }
+
+    // Sort by frequency, take top 6, filter too-similar
+    const sorted = Object.entries(buckets).sort((a,b) => b[1] - a[1]);
+    const picks = [];
+    for (const [key] of sorted) {
+      if (picks.length >= 6) break;
+      const [r,g,b] = key.split(',').map(Number);
+      // Skip if too close to an already-picked colour
+      const tooClose = picks.some(([pr,pg,pb]) =>
+        Math.abs(r-pr) + Math.abs(g-pg) + Math.abs(b-pb) < 60
+      );
+      if (!tooClose) picks.push([r,g,b]);
+    }
+
+    swatchBox.innerHTML = '';
+    if (!picks.length) { container.style.display = 'none'; return; }
+    picks.forEach(([r,g,b]) => {
+      const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+      const sw  = document.createElement('div');
+      sw.className = 'logo-color-swatch';
+      sw.style.background = hex;
+      sw.title = hex;
+      sw.onclick = () => onColorChange(team, hex);
+      swatchBox.appendChild(sw);
+    });
+    container.style.display = '';
+  };
+  img.onerror = () => { container.style.display = 'none'; };
+  img.src = src;
+}
+
+// ── Logo upload ────────────────────────────────────────────────────────
+async function uploadLogo(team, input) {
+  if (!input.files[0]) return;
+  const form = new FormData();
+  form.append('logo', input.files[0]);
+  try {
+    const res  = await fetch(`/api/upload/${team}`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.logo) toast('Logo uploaded'); else toast('Upload failed');
+  } catch (e) { toast('Upload error'); }
+  input.value = '';
+}
+
+async function removeLogo(team) {
+  await fetch(`/api/upload/${team}`, { method: 'DELETE' });
+  toast('Logo removed');
+}
+
+// ── Profiles ───────────────────────────────────────────────────────────
+let saveType = 'match';
+let includeStyle = false;
+
+function setSaveType(type) {
+  saveType = type;
+  ['match','style','full'].forEach(t => {
+    document.getElementById(`save-type-${t}`).classList.toggle('active', t === type);
+  });
+  document.getElementById('include-style-wrap').style.display = type === 'match' ? '' : 'none';
+}
+
+function toggleIncludeStyle() {
+  includeStyle = !includeStyle;
+  setToggle('toggle-include-style', includeStyle);
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profile-name').value.trim();
+  if (!name) { toast('Enter a profile name'); return; }
+
+  const body = { name, type: saveType, includeStyle: saveType === 'match' && includeStyle };
+  const res  = await fetch('/api/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (res.ok) {
+    toast('Profile saved');
+    document.getElementById('profile-name').value = '';
+    loadProfileList();
+  } else {
+    toast('Save failed');
+  }
+}
+
+async function loadProfileList() {
+  const res  = await fetch('/api/profiles');
+  const list = await res.json();
+  const el   = document.getElementById('profile-list');
+
+  if (!list.length) { el.innerHTML = '<div class="no-profiles">No saved profiles yet.</div>'; return; }
+
+  el.innerHTML = '';
+  list.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'profile-item';
+
+    const typeKey = p.type.replace('+', '\\+');
+    row.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+        <div class="profile-item-name">${escHtml(p.name)}</div>
+        <div class="profile-item-meta">${new Date(p.createdAt).toLocaleString()}</div>
+      </div>
+      <span class="profile-type-badge ${p.type}">${p.type}</span>
+      <button class="btn btn-success btn-sm" onclick="loadProfile('${p.id}')">Load</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteProfile('${p.id}', this)">Delete</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+async function loadProfile(id) {
+  const res = await fetch(`/api/profiles/${id}/load`, { method: 'POST' });
+  if (res.ok) toast('Profile loaded'); else toast('Load failed');
+}
+
+async function deleteProfile(id, btn) {
+  if (!confirm('Delete this profile?')) return;
+  await fetch(`/api/profiles/${id}`, { method: 'DELETE' });
+  btn.closest('.profile-item').remove();
+  toast('Profile deleted');
+}
+
+function escHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── Toast ──────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, duration) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration || 2500);
+}
+
+connect();
+if (Notification.permission === 'default') Notification.requestPermission();
+</script>
+</body>
+</html>
