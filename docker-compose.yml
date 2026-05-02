@@ -7,5 +7,3 @@ services:
       - ./data:/app/data
       - ./public/uploads:/app/public/uploads
     restart: unless-stopped
-    environment:
-      - PORT=3000
