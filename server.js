@@ -166,7 +166,7 @@ const DEFAULT_STATE = {
   bugStyle: {
     useShortName: true,
     // Names
-    nameFont: 'Barlow Condensed',
+    nameFont: 'Russo One',
     nameSize: 22,
     nameColor: '#ffffff',
     // Scores
@@ -200,8 +200,8 @@ const DEFAULT_STATE = {
     logoBgRotation: 0,
     logoBgOpacity: 40,
     // Fonts
-    scoreFont: 'Roboto Mono',
-    clockFont: 'Roboto Mono',
+    scoreFont: 'Russo One',
+    clockFont: 'Russo One',
     // Name block padding
     namePadH: 8,
     // Clock panel background (null = inherit bug bg)
