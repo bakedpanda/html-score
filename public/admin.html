@@ -357,6 +357,16 @@
   </div>
 </div>
 
+<!-- Overlay link bar -->
+<div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:8px">
+  <span style="font-size:11px;color:var(--text-dim);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;flex-shrink:0">Overlay</span>
+  <code id="overlay-url-display" style="font-size:12px;color:var(--text-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></code>
+  <button class="btn btn-ghost btn-sm" id="copy-overlay-btn" onclick="copyOverlayLink()" style="font-size:12px;flex-shrink:0">
+    <span id="copy-overlay-icon">⎘</span> Copy
+  </button>
+  <a id="overlay-preview-link" href="/overlay.html" target="_blank" class="btn btn-ghost btn-sm" style="font-size:12px;flex-shrink:0;text-decoration:none">↗ Preview</a>
+</div>
+
 <!-- Tab nav -->
 <nav class="tab-nav">
   <button class="tab-btn" id="tab-btn-setup"    onclick="switchTab('setup')">Setup</button>
@@ -1166,6 +1176,23 @@ function connect() {
   };
 }
 
+function initOverlayBar() {
+  const url = location.origin + '/overlay.html';
+  document.getElementById('overlay-url-display').textContent = url;
+  document.getElementById('overlay-preview-link').href = url;
+}
+
+function copyOverlayLink() {
+  const url = location.origin + '/overlay.html';
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copy-overlay-btn');
+    const icon = document.getElementById('copy-overlay-icon');
+    btn.style.color = 'var(--green)';
+    icon.textContent = '✓';
+    setTimeout(() => { btn.style.color = ''; icon.textContent = '⎘'; }, 2000);
+  });
+}
+
 function send(action) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(action));
 }
@@ -1969,6 +1996,7 @@ function toast(msg, duration) {
 }
 
 connect();
+initOverlayBar();
 if (Notification.permission === 'default') Notification.requestPermission();
 </script>
 </body>
