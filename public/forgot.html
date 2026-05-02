@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Score Bug — Login</title>
+<title>Score Bug — Reset Password</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -21,17 +21,23 @@
     border-radius: 10px;
     padding: 36px 32px;
     width: 100%;
-    max-width: 340px;
+    max-width: 360px;
   }
   .title {
     font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    margin-bottom: 24px;
+    margin-bottom: 6px;
     text-align: center;
   }
   .title span { color: #3b82f6; }
+  .sub {
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
   label {
     display: block;
     font-size: 11px;
@@ -41,7 +47,7 @@
     color: #64748b;
     margin-bottom: 6px;
   }
-  input[type=password] {
+  input[type=text], input[type=password] {
     width: 100%;
     background: #1c2130;
     border: 1px solid #252b3a;
@@ -52,7 +58,8 @@
     outline: none;
     margin-bottom: 16px;
   }
-  input[type=password]:focus { border-color: #3b82f6; }
+  input[type=text] { font-family: monospace; letter-spacing: 0.05em; }
+  input[type=text]:focus, input[type=password]:focus { border-color: #3b82f6; }
   button {
     width: 100%;
     background: #3b82f6;
@@ -67,15 +74,6 @@
     cursor: pointer;
   }
   button:hover { background: #2563eb; }
-  .forgot {
-    display: block;
-    text-align: center;
-    margin-top: 14px;
-    font-size: 13px;
-    color: #64748b;
-    text-decoration: none;
-  }
-  .forgot:hover { color: #e2e8f0; }
   .error {
     background: rgba(230,57,70,0.12);
     border: 1px solid rgba(230,57,70,0.3);
@@ -88,22 +86,38 @@
     display: none;
   }
   .error.show { display: block; }
+  .back {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #64748b;
+    text-decoration: none;
+  }
+  .back:hover { color: #e2e8f0; }
 </style>
 </head>
 <body>
 <div class="box">
   <div class="title">Score<span>Bug</span></div>
-  <div class="error<?php ?>" id="err">Incorrect password</div>
-  <form method="POST" action="/login">
-    <label>Password</label>
-    <input type="password" name="password" autofocus autocomplete="current-password">
-    <button type="submit">Sign in</button>
+  <p class="sub">Enter your recovery key to reset your password</p>
+  <div class="error" id="err-key">Invalid recovery key or password too short</div>
+  <div class="error" id="err-mismatch">Passwords do not match</div>
+  <form method="POST" action="/forgot">
+    <label>Recovery Key</label>
+    <input type="text" name="recoveryKey" autofocus autocomplete="off" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" spellcheck="false">
+    <label>New Password</label>
+    <input type="password" name="password" autocomplete="new-password" minlength="6">
+    <label>Confirm New Password</label>
+    <input type="password" name="confirm" autocomplete="new-password" minlength="6">
+    <button type="submit">Reset Password</button>
   </form>
-  <a href="/forgot" class="forgot">Forgot password?</a>
+  <a href="/login" class="back">Back to login</a>
 </div>
 <script>
-  if (location.search.includes('error=1'))
-    document.getElementById('err').classList.add('show');
+  const p = new URLSearchParams(location.search);
+  if (p.get('error') === '1')        document.getElementById('err-key').classList.add('show');
+  if (p.get('error') === 'mismatch') document.getElementById('err-mismatch').classList.add('show');
 </script>
 </body>
 </html>

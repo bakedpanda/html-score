@@ -1,4 +1,5 @@
 node_modules/
 data/state.json
+data/auth.json
 data/profiles/
 public/uploads/

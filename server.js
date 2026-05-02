@@ -20,9 +20,31 @@ const PROFILES_DIR = path.join(__dirname, 'data', 'profiles');
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────
+const AUTH_FILE      = path.join(__dirname, 'data', 'auth.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD?.trim().replace(/^["']|["']$/g, '') || null;
 const COOKIE_SECRET  = process.env.COOKIE_SECRET  || crypto.randomBytes(32).toString('hex');
 const COOKIE_NAME    = 'sb_auth';
+
+function hashSecret(secret) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  return salt + ':' + crypto.scryptSync(secret, salt, 64).toString('hex');
+}
+function verifySecret(secret, stored) {
+  const colon = stored.indexOf(':');
+  const salt = stored.slice(0, colon);
+  const hash = stored.slice(colon + 1);
+  try { return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), crypto.scryptSync(secret, salt, 64)); }
+  catch { return false; }
+}
+function generateRecoveryKey() {
+  const hex = crypto.randomBytes(12).toString('hex').toUpperCase();
+  return `${hex.slice(0,6)}-${hex.slice(6,12)}-${hex.slice(12,18)}-${hex.slice(18,24)}`;
+}
+function getAuthMode() {
+  if (fs.existsSync(AUTH_FILE)) return 'file';
+  if (ADMIN_PASSWORD) return 'env';
+  return 'setup';
+}
 
 function signValue(val) {
   return val + '.' + crypto.createHmac('sha256', COOKIE_SECRET).update(val).digest('base64url');
@@ -47,10 +69,50 @@ function parseCookies(req) {
   return out;
 }
 function requireAuth(req, res, next) {
-  if (!ADMIN_PASSWORD) return next();
+  const mode = getAuthMode();
+  if (mode === 'setup') return res.redirect('/setup');
   if (verifySignedCookie(parseCookies(req)[COOKIE_NAME])) return next();
   if (req.path.startsWith('/api')) return res.status(401).json({ error: 'Unauthorised' });
   res.redirect('/login');
+}
+
+function recoveryKeyPage(key) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Bug — Save Your Recovery Key</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0b0d11; color: #e2e8f0; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .box { background: #131720; border: 1px solid #252b3a; border-radius: 10px; padding: 36px 32px; width: 100%; max-width: 460px; }
+  .title { font-size: 22px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+  .title span { color: #3b82f6; }
+  .sub { text-align: center; color: #64748b; font-size: 13px; margin-bottom: 28px; }
+  .key-box { background: #0b0d11; border: 1px solid #3b82f6; border-radius: 8px; padding: 18px 20px; font-family: monospace; font-size: 20px; letter-spacing: 0.12em; text-align: center; color: #e2e8f0; margin-bottom: 20px; }
+  .warn { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); color: #eab308; border-radius: 6px; padding: 12px; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  label.check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; margin-bottom: 20px; color: #a0aec0; line-height: 1.4; }
+  input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; accent-color: #3b82f6; flex-shrink: 0; }
+  button { width: 100%; background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 11px; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; opacity: 0.35; pointer-events: none; transition: opacity 0.15s; }
+  button.ready { opacity: 1; pointer-events: auto; }
+  button.ready:hover { background: #2563eb; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="title">Score<span>Bug</span></div>
+  <p class="sub">Password set — save your recovery key</p>
+  <div class="key-box">${key}</div>
+  <div class="warn">&#x26A0;&#xFE0F; This key is shown once and cannot be recovered. Write it down or store it somewhere safe. You will need it if you forget your password.</div>
+  <label class="check">
+    <input type="checkbox" id="ack" onchange="document.getElementById('btn').classList.toggle('ready',this.checked)">
+    I have saved my recovery key in a safe place
+  </label>
+  <button id="btn" onclick="location.href='/admin.html'">Continue to Admin Panel</button>
+</div>
+</body>
+</html>`;
 }
 
 // Seed default profiles if they don't already exist
@@ -446,15 +508,68 @@ const upload = multer({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// ── Setup (first-run password creation) ───────────────────────────────
+app.get('/setup', (req, res) => {
+  if (getAuthMode() !== 'setup') return res.redirect('/admin.html');
+  res.sendFile(path.join(__dirname, 'public', 'setup.html'));
+});
+app.post('/setup', (req, res) => {
+  if (getAuthMode() !== 'setup') return res.redirect('/admin.html');
+  const password = req.body.password?.trim();
+  const confirm  = req.body.confirm?.trim();
+  if (!password || password.length < 6) return res.redirect('/setup?error=weak');
+  if (password !== confirm)             return res.redirect('/setup?error=mismatch');
+  const recoveryKey = generateRecoveryKey();
+  fs.writeFileSync(AUTH_FILE, JSON.stringify({
+    hash: hashSecret(password),
+    recoveryHash: hashSecret(recoveryKey),
+    createdAt: new Date().toISOString(),
+  }, null, 2));
+  const maxAge = 60 * 60 * 24 * 30;
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${signValue('admin')}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`);
+  res.send(recoveryKeyPage(recoveryKey));
+});
+
+// ── Forgot password ────────────────────────────────────────────────────
+app.get('/forgot', (req, res) => {
+  if (getAuthMode() !== 'file') return res.redirect('/login');
+  if (verifySignedCookie(parseCookies(req)[COOKIE_NAME])) return res.redirect('/admin.html');
+  res.sendFile(path.join(__dirname, 'public', 'forgot.html'));
+});
+app.post('/forgot', (req, res) => {
+  if (getAuthMode() !== 'file') return res.redirect('/login');
+  const { recoveryKey, password, confirm } = req.body;
+  if (!recoveryKey || !password || password.length < 6) return res.redirect('/forgot?error=1');
+  if (password !== confirm)                              return res.redirect('/forgot?error=mismatch');
+  const auth = JSON.parse(fs.readFileSync(AUTH_FILE, 'utf8'));
+  const key = recoveryKey.trim().toUpperCase().replace(/[^0-9A-F-]/g, '');
+  if (!verifySecret(key, auth.recoveryHash)) return res.redirect('/forgot?error=1');
+  auth.hash = hashSecret(password.trim());
+  fs.writeFileSync(AUTH_FILE, JSON.stringify(auth, null, 2));
+  const maxAge = 60 * 60 * 24 * 30;
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${signValue('admin')}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`);
+  res.redirect('/admin.html');
+});
+
 // ── Login / logout routes (public) ────────────────────────────────────
 app.get('/login', (req, res) => {
-  if (!ADMIN_PASSWORD) return res.redirect('/admin.html');
+  if (getAuthMode() === 'setup') return res.redirect('/setup');
   if (verifySignedCookie(parseCookies(req)[COOKIE_NAME])) return res.redirect('/admin.html');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 app.post('/login', (req, res) => {
-  if (!ADMIN_PASSWORD || req.body.password?.trim() === ADMIN_PASSWORD) {
-    const maxAge = 60 * 60 * 24 * 30; // 30 days
+  const mode = getAuthMode();
+  let ok = false;
+  if (mode === 'env') {
+    ok = req.body.password?.trim() === ADMIN_PASSWORD;
+  } else if (mode === 'file') {
+    try {
+      const auth = JSON.parse(fs.readFileSync(AUTH_FILE, 'utf8'));
+      ok = verifySecret(req.body.password?.trim() || '', auth.hash);
+    } catch { ok = false; }
+  }
+  if (ok) {
+    const maxAge = 60 * 60 * 24 * 30;
     res.setHeader('Set-Cookie', `${COOKIE_NAME}=${signValue('admin')}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`);
     return res.redirect('/admin.html');
   }
@@ -462,11 +577,11 @@ app.post('/login', (req, res) => {
 });
 app.get('/logout', (req, res) => {
   res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
-  res.redirect(ADMIN_PASSWORD ? '/login' : '/admin.html');
+  res.redirect('/login');
 });
 
 // ── Protected routes ───────────────────────────────────────────────────
-app.get('/api/auth-enabled', (req, res) => res.json({ enabled: !!ADMIN_PASSWORD }));
+app.get('/api/auth-enabled', (req, res) => res.json({ enabled: true, mode: getAuthMode() }));
 app.get('/admin.html', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.use('/api', requireAuth);
 
