@@ -492,10 +492,10 @@
   }
 
   // ── Card panel ────────────────────────────────────────────────────────
-  function renderCpPips(el, yellow, red) {
+  function renderCpPips(el, yellow, red, pipW, pipH) {
     el.innerHTML = '';
-    const w = getComputedStyle(document.documentElement).getPropertyValue('--card-pip-w').trim() || '10px';
-    const h = getComputedStyle(document.documentElement).getPropertyValue('--card-pip-h').trim() || '14px';
+    const w = pipW + 'px';
+    const h = pipH + 'px';
     for (let i = 0; i < yellow; i++) makePip(el, 'yellow', w, h);
     for (let i = 0; i < red;    i++) makePip(el, 'red',    w, h);
   }
@@ -518,12 +518,34 @@
     const opacity  = (s.cardPanelBgOpacity ?? s.bugBgOpacity ?? 92) / 100;
     const bg       = `rgba(${r},${g},${b},${opacity})`;
 
-    const canShow = d.showCards && sport.hasCards;
+    const canShow   = d.showCards && sport.hasCards;
     const homeCards = (state.home.yellowCards||0) + (state.home.redCards||0);
     const awayCards = (state.away.yellowCards||0) + (state.away.redCards||0);
 
     const homePanelEl = document.getElementById('cp-home-panel');
     const awayPanelEl = document.getElementById('cp-away-panel');
+
+    // Base pip size
+    const scale    = s.cardPanelScale || 1;
+    const basePipW = Math.round(10 * scale);
+    const basePipH = Math.round(14 * scale);
+    const padH     = 10; // horizontal padding each side of panel
+    const pipGap   = 10; // gap between pips (matches .cp-pips gap)
+
+    // Max panel width = half bug width minus the corner inset
+    const bug  = document.getElementById('bug');
+    const bugW = bug ? bug.offsetWidth : 0;
+    const maxW = bugW / 2 - R;
+
+    function fitPipSize(n) {
+      if (n <= 0 || maxW <= 0) return { w: basePipW, h: basePipH };
+      const available = maxW - padH * 2;
+      const needed    = n * basePipW + (n - 1) * pipGap;
+      if (needed <= available) return { w: basePipW, h: basePipH };
+      const pipW = Math.max(4, Math.floor((available - (n - 1) * pipGap) / n));
+      const pipH = Math.max(6, Math.round(pipW * basePipH / basePipW));
+      return { w: pipW, h: pipH };
+    }
 
     function positionPanel(el, hasCards) {
       if (!canShow || !hasCards) {
@@ -533,7 +555,6 @@
       el.classList.remove('hidden');
       el.style.background = bg;
 
-      // Flush positioning — no overlap, so opacities don't compound
       if (pos === 'bottom') {
         el.style.top           = '100%';
         el.style.bottom        = '';
@@ -555,10 +576,14 @@
     positionPanel(homePanelEl, homeCards);
     positionPanel(awayPanelEl, awayCards);
 
-    if (canShow && homeCards > 0)
-      renderCpPips(document.getElementById('cp-home-pips'), state.home.yellowCards, state.home.redCards);
-    if (canShow && awayCards > 0)
-      renderCpPips(document.getElementById('cp-away-pips'), state.away.yellowCards, state.away.redCards);
+    if (canShow && homeCards > 0) {
+      const { w, h } = fitPipSize(homeCards);
+      renderCpPips(document.getElementById('cp-home-pips'), state.home.yellowCards, state.home.redCards, w, h);
+    }
+    if (canShow && awayCards > 0) {
+      const { w, h } = fitPipSize(awayCards);
+      renderCpPips(document.getElementById('cp-away-pips'), state.away.yellowCards, state.away.redCards, w, h);
+    }
   }
 
   // ── Logos ─────────────────────────────────────────────────────────────
