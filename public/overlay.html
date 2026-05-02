@@ -100,11 +100,6 @@
   }
   .cp-pip.yellow { background: #f5c400; }
   .cp-pip.red    { background: #e63946; }
-  .cp-color-strip {
-    width: 3px;
-    align-self: stretch;
-    border-radius: 2px;
-  }
   .cp-spacer { flex: 1; }
 
   /* ── Score bug layout ── */
@@ -285,13 +280,11 @@
   <!-- Card panel: slides out top/bottom -->
   <div id="card-panel" class="hidden">
     <div class="cp-team" id="cp-home">
-      <div class="cp-color-strip" id="cp-home-strip"></div>
       <div class="cp-pips" id="cp-home-pips"></div>
     </div>
     <div class="cp-spacer"></div>
     <div class="cp-team" id="cp-away">
       <div class="cp-pips" id="cp-away-pips"></div>
-      <div class="cp-color-strip" id="cp-away-strip"></div>
     </div>
   </div>
 </div><!-- /#bug-wrapper -->
@@ -546,11 +539,9 @@
     cpHome.style.display = homeCards > 0 ? 'flex' : 'none';
     cpAway.style.display = awayCards > 0 ? 'flex' : 'none';
     if (homeCards > 0) {
-      document.getElementById('cp-home-strip').style.background = state.home.color;
       renderCpPips(document.getElementById('cp-home-pips'), state.home.yellowCards, state.home.redCards);
     }
     if (awayCards > 0) {
-      document.getElementById('cp-away-strip').style.background = state.away.color;
       renderCpPips(document.getElementById('cp-away-pips'), state.away.yellowCards, state.away.redCards);
     }
   }
