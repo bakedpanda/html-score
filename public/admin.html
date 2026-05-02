@@ -8,15 +8,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=Bebas+Neue&family=Chakra+Petch:wght@600;700&family=Changa:wght@600;700&family=Exo+2:wght@700;800&family=Fjalla+One&family=Inter:wght@700;800&family=Kanit:wght@600;700&family=Montserrat:wght@700;800&family=Orbitron:wght@700;800&family=Oswald:wght@600&family=Rajdhani:wght@600;700&family=Roboto+Condensed:wght@700&family=Russo+One&family=Saira+Condensed:wght@600;700&family=Saira+Extra+Condensed:wght@600;700&family=Squada+One&family=Teko:wght@600&family=Titillium+Web:wght@600;700&family=Yantramanav:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:         #0b0d11;
-    --surface:    #131720;
-    --surface2:   #1c2130;
-    --border:     #252b3a;
-    --accent:     #3b82f6;
-    --accent-dim: rgba(59,130,246,0.15);
+    --bg:         #0c0d0f;
+    --surface:    #151618;
+    --surface2:   #1e2023;
+    --border:     #2b2d33;
+    --accent:     #94a3b8;
+    --accent-dim: rgba(148,163,184,0.12);
     --text:       #e2e8f0;
-    --text-dim:   #64748b;
-    --text-muted: #3d4c60;
+    --text-dim:   #6b7280;
+    --text-muted: #404248;
     --green:      #22c55e;
     --yellow:     #f5c400;
     --red:        #e63946;
@@ -115,8 +115,8 @@
     letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; white-space: nowrap;
   }
   .btn:active { transform: scale(0.97); }
-  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn-primary:hover { background: #2563eb; }
+  .btn-primary { background: var(--accent); color: #0c0d0f; border-color: var(--accent); }
+  .btn-primary:hover { background: #b0bfcf; }
   .btn-ghost { background: var(--surface2); color: var(--text-dim); border-color: var(--border); }
   .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
   .btn-danger { background: rgba(230,57,70,0.15); color: var(--red); border-color: rgba(230,57,70,0.3); }
@@ -339,9 +339,35 @@
   #toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; color: var(--text); opacity: 0; transform: translateY(6px); transition: all 0.25s; pointer-events: none; z-index: 1000; }
   #toast.show { opacity: 1; transform: translateY(0); }
 
-  @media (max-width: 800px) {
-    .team-grid, .row-2, .style-row.cols-2, .style-row.cols-3, .style-row.cols-4 { grid-template-columns: 1fr; }
-    .score-area { grid-template-columns: 1fr auto 1fr; }
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .style-row.cols-4 { grid-template-columns: 1fr 1fr; }
+    .style-row.cols-3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 700px) {
+    .main { padding: 12px 12px 60px; }
+    .team-grid, .row-2,
+    .style-row.cols-2, .style-row.cols-3, .style-row.cols-4 { grid-template-columns: 1fr; }
+    .tab-nav { padding: 0 8px; overflow-x: auto; scrollbar-width: none; }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn { padding: 11px 12px; font-size: 13px; white-space: nowrap; }
+    .header { padding: 10px 12px; gap: 8px; }
+    .header-title { font-size: 17px; }
+    .status-pill { display: none; }
+    #logout-btn { padding: 5px 10px; font-size: 11px; }
+    .score-display { font-size: 52px; }
+    .score-sep { font-size: 34px; padding-top: 20px; }
+    .clock-display-big { font-size: 46px; }
+  }
+  @media (max-width: 460px) {
+    .score-area { grid-template-columns: 1fr 28px 1fr; gap: 6px; }
+    .score-display { font-size: 42px; min-width: 56px; padding: 4px 6px; }
+    .score-sep { font-size: 26px; padding-top: 14px; }
+    .score-btns { gap: 3px; }
+    .score-inc-btn { padding: 5px 8px; font-size: 11px; }
+    .score-inc-btn .val { font-size: 13px; }
+    .btn-lg { font-size: 16px; padding: 10px 14px; }
+    .save-type-grid { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -359,9 +385,9 @@
 </div>
 
 <!-- Overlay link bar -->
-<div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:8px">
+<div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
   <span style="font-size:11px;color:var(--text-dim);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;flex-shrink:0">Overlay</span>
-  <code id="overlay-url-display" style="font-size:12px;color:var(--text-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></code>
+  <code id="overlay-url-display" style="font-size:12px;color:var(--text-dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></code>
   <button class="btn btn-ghost btn-sm" id="copy-overlay-btn" onclick="copyOverlayLink()" style="font-size:12px;flex-shrink:0">
     <span id="copy-overlay-icon">⎘</span> Copy
   </button>
@@ -1464,13 +1490,17 @@ function renderScoreButtons(team, buttons) {
 
 function renderCardPips(team, yellow, red) {
   ['yellow', 'red'].forEach(type => {
-    const el = document.getElementById(`${team}-${type}-pips`);
+    const el    = document.getElementById(`${team}-${type}-pips`);
     const count = type === 'yellow' ? yellow : red;
-    const max   = type === 'yellow' ? 3 : 2;
     el.innerHTML = '';
-    for (let i = 0; i < max; i++) {
+    // always show one dim placeholder pip
+    const placeholder = document.createElement('div');
+    placeholder.className = `card-pip ${type}`;
+    el.appendChild(placeholder);
+    // then one active pip per card
+    for (let i = 0; i < count; i++) {
       const d = document.createElement('div');
-      d.className = `card-pip ${type}${i < count ? ' active' : ''}`;
+      d.className = `card-pip ${type} active`;
       el.appendChild(d);
     }
   });

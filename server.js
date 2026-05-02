@@ -90,13 +90,13 @@ function recoveryKeyPage(key) {
   .title { font-size: 22px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
   .title span { color: #3b82f6; }
   .sub { text-align: center; color: #64748b; font-size: 13px; margin-bottom: 28px; }
-  .key-box { background: #0b0d11; border: 1px solid #3b82f6; border-radius: 8px; padding: 18px 20px; font-family: monospace; font-size: 20px; letter-spacing: 0.12em; text-align: center; color: #e2e8f0; margin-bottom: 20px; }
+  .key-box { background: #0b0d11; border: 1px solid #94a3b8; border-radius: 8px; padding: 18px 20px; font-family: monospace; font-size: 20px; letter-spacing: 0.12em; text-align: center; color: #e2e8f0; margin-bottom: 20px; }
   .warn { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); color: #eab308; border-radius: 6px; padding: 12px; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
   label.check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; margin-bottom: 20px; color: #a0aec0; line-height: 1.4; }
-  input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; accent-color: #3b82f6; flex-shrink: 0; }
-  button { width: 100%; background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 11px; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; opacity: 0.35; pointer-events: none; transition: opacity 0.15s; }
+  input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; accent-color: #94a3b8; flex-shrink: 0; }
+  button { width: 100%; background: #94a3b8; color: #0c0d0f; border: none; border-radius: 6px; padding: 11px; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; opacity: 0.35; pointer-events: none; transition: opacity 0.15s; }
   button.ready { opacity: 1; pointer-events: auto; }
-  button.ready:hover { background: #2563eb; }
+  button.ready:hover { background: #b0bfcf; }
 </style>
 </head>
 <body>
