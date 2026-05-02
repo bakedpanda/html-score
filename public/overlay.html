@@ -47,7 +47,8 @@
     justify-content: center;
     white-space: nowrap;
     overflow: hidden;
-    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                clip-path 0.38s cubic-bezier(0.4, 0, 0.2, 1);
   }
   #clock-panel.hidden { pointer-events: none; }
 
@@ -429,7 +430,9 @@
     const side   = ec.side || 'right';
     const visible   = !!state.display?.showClock;
     const wasVisible = _cpPrev.visible;
-    const slideOut   = side === 'right' ? 'translateX(-110%)' : 'translateX(110%)';
+    const slideOut  = side === 'right' ? 'translateX(-110%)' : 'translateX(110%)';
+    const clipOut   = side === 'right' ? 'inset(0 0 0 110%)' : 'inset(0 110% 0 0)';
+    const clipIn    = 'inset(0 0 0 0)';
 
     // Only update layout/animation when visibility or side changes
     const stateChanged = visible !== wasVisible || side !== _cpPrev.side;
@@ -438,6 +441,7 @@
     if (!visible) {
       if (stateChanged) {
         panel.style.transform = slideOut;
+        panel.style.clipPath  = clipOut;
         if (bug) bug.style.borderRadius = R + 'px';
       }
       panel.classList.add('hidden');
@@ -467,14 +471,16 @@
       panel.style.background = document._clockBg || bg;
       panel.classList.remove('hidden');
 
-      // If becoming visible, snap to slide-out position first then animate in
+      // Snap to slide-out position/clip, then animate in
       if (!wasVisible) {
         panel.style.transition = 'none';
         panel.style.transform  = slideOut;
+        panel.style.clipPath   = clipOut;
         panel.getBoundingClientRect(); // force reflow before re-enabling transition
         panel.style.transition = '';
       }
       panel.style.transform = 'translateX(0)';
+      panel.style.clipPath  = clipIn;
     }
 
     // Update content every tick

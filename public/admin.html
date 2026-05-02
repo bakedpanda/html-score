@@ -1939,7 +1939,15 @@ function extractLogoColors(team, src) {
     }
 
     swatchBox.innerHTML = '';
-    if (!picks.length) { container.style.display = 'none'; return; }
+    // Always offer black and white
+    ['#000000', '#ffffff'].forEach(hex => {
+      const sw = document.createElement('div');
+      sw.className = 'logo-color-swatch';
+      sw.style.background = hex;
+      sw.title = hex;
+      sw.onclick = () => onColorChange(team, hex);
+      swatchBox.appendChild(sw);
+    });
     picks.forEach(([r,g,b]) => {
       const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
       const sw  = document.createElement('div');
