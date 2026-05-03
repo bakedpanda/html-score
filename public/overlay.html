@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@600;700&family=Bebas+Neue&family=Chakra+Petch:wght@600;700&family=Changa:wght@600;700&family=Exo+2:wght@700;800&family=Fjalla+One&family=Inter:wght@700;800&family=Kanit:wght@600;700&family=Montserrat:wght@700;800&family=Orbitron:wght@700;800&family=Oswald:wght@600;700&family=Rajdhani:wght@600;700&family=Roboto+Condensed:wght@700&family=Russo+One&family=Saira+Condensed:wght@600;700&family=Saira+Extra+Condensed:wght@600;700&family=Squada+One&family=Teko:wght@600;700&family=Titillium+Web:wght@600;700&family=Yantramanav:wght@700;900&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  body.no-transitions * { transition: none !important; animation: none !important; }
 
   body {
     width: 1920px;
@@ -221,7 +222,7 @@
   .score-box.flash { animation: scoreFlash 0.6s ease-out; }
 </style>
 </head>
-<body>
+<body class="no-transitions">
 
 <div id="bug-wrapper" style="visibility:hidden">
   <div id="bug">
@@ -723,10 +724,8 @@
 
     if (!_firstState) {
       _firstState = true;
-      const wrapper = document.getElementById('bug-wrapper');
-      wrapper.style.transition = 'none';
-      wrapper.style.visibility = '';
-      requestAnimationFrame(() => requestAnimationFrame(() => { wrapper.style.transition = ''; }));
+      document.getElementById('bug-wrapper').style.visibility = '';
+      requestAnimationFrame(() => requestAnimationFrame(() => { document.body.classList.remove('no-transitions'); }));
     }
   }
 
