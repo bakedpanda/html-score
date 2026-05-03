@@ -136,7 +136,8 @@
   .color-swatch input[type="color"] {
     position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer;
   }
-  .color-swatch-label { font-size: 12px; color: var(--text-dim); font-family: 'Barlow', monospace; }
+  .color-swatch-label { font-size: 12px; color: var(--text-dim); font-family: 'Barlow', monospace; background: transparent; border: none; outline: none; width: 7ch; padding: 0; cursor: text; }
+  .color-swatch-label:focus { color: var(--text); }
 
   /* ── Toggle items ── */
   .toggle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 7px; }
@@ -460,7 +461,7 @@
               <div class="color-swatch" id="home-color-big">
                 <input type="color" id="home-color-input2" value="#c8102e" oninput="onColorChange('home', this.value)">
               </div>
-              <span class="color-swatch-label" id="home-color-hex">#c8102e</span>
+              <input type="text" class="color-swatch-label" id="home-color-hex" value="#c8102e" onfocus="this.select()" onchange="onHexChange(this)" data-color-input="home-color-input2">
             </div>
             <div id="home-logo-colors" style="display:none;margin-top:6px">
               <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">From Logo</div>
@@ -502,7 +503,7 @@
               <div class="color-swatch" id="away-color-big">
                 <input type="color" id="away-color-input2" value="#001489" oninput="onColorChange('away', this.value)">
               </div>
-              <span class="color-swatch-label" id="away-color-hex">#001489</span>
+              <input type="text" class="color-swatch-label" id="away-color-hex" value="#001489" onfocus="this.select()" onchange="onHexChange(this)" data-color-input="away-color-input2">
             </div>
             <div id="away-logo-colors" style="display:none;margin-top:6px">
               <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.1em">From Logo</div>
@@ -709,7 +710,7 @@
               <div class="color-swatch">
                 <input type="color" id="s-bug-bg-color" value="#080b10" oninput="onStyleColor('bugBgColor',this.value,'s-bug-bg-color-hex')">
               </div>
-              <span class="color-swatch-label" id="s-bug-bg-color-hex">#080b10</span>
+              <input type="text" class="color-swatch-label" id="s-bug-bg-color-hex" value="#080b10" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
@@ -792,7 +793,7 @@
               <div class="color-swatch">
                 <input type="color" id="s-name-color" value="#ffffff" oninput="onStyleColor('nameColor',this.value,'s-name-color-hex')">
               </div>
-              <span class="color-swatch-label" id="s-name-color-hex">#ffffff</span>
+              <input type="text" class="color-swatch-label" id="s-name-color-hex" value="#ffffff" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
@@ -848,7 +849,7 @@
               <div class="color-swatch">
                 <input type="color" id="s-score-color" value="#ffffff" oninput="onStyleColor('scoreColor',this.value,'s-score-color-hex')">
               </div>
-              <span class="color-swatch-label" id="s-score-color-hex">#ffffff</span>
+              <input type="text" class="color-swatch-label" id="s-score-color-hex" value="#ffffff" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
@@ -857,7 +858,7 @@
               <div class="color-swatch">
                 <input type="color" id="s-score-box-bg" value="#13171f" oninput="onStyleColor('scoreBoxBg',this.value,'s-score-box-bg-hex')">
               </div>
-              <span class="color-swatch-label" id="s-score-box-bg-hex">#13171f</span>
+              <input type="text" class="color-swatch-label" id="s-score-box-bg-hex" value="#13171f" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
@@ -873,7 +874,7 @@
             <label>Flash Colour</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
               <div class="color-swatch"><input type="color" id="s-flash-color" value="#ffd700" oninput="onStyleColor('flashColor',this.value,'s-flash-color-hex')"></div>
-              <span class="color-swatch-label" id="s-flash-color-hex">#ffd700</span>
+              <input type="text" class="color-swatch-label" id="s-flash-color-hex" value="#ffd700" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
         </div>
@@ -1027,7 +1028,7 @@
             <label>Clock Panel Background</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
               <div class="color-swatch"><input type="color" id="s-clock-bg-color" value="#080b10" oninput="onStyleColor('clockBgColor',this.value,'s-clock-bg-color-hex')"></div>
-              <span class="color-swatch-label" id="s-clock-bg-color-hex">#080b10</span>
+              <input type="text" class="color-swatch-label" id="s-clock-bg-color-hex" value="#080b10" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
@@ -1048,21 +1049,21 @@
             <label>Clock Colour</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
               <div class="color-swatch"><input type="color" id="s-clock-color" value="#a8b5c8" oninput="onStyleColor('clockColor',this.value,'s-clock-color-hex')"></div>
-              <span class="color-swatch-label" id="s-clock-color-hex">#a8b5c8</span>
+              <input type="text" class="color-swatch-label" id="s-clock-color-hex" value="#a8b5c8" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
             <label>Running Colour</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
               <div class="color-swatch"><input type="color" id="s-clock-run-color" value="#4ade80" oninput="onStyleColor('clockRunningColor',this.value,'s-clock-run-color-hex')"></div>
-              <span class="color-swatch-label" id="s-clock-run-color-hex">#4ade80</span>
+              <input type="text" class="color-swatch-label" id="s-clock-run-color-hex" value="#4ade80" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
           <div class="field">
             <label>Overtime Colour</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
               <div class="color-swatch"><input type="color" id="s-clock-ot-color" value="#e63946" oninput="onStyleColor('clockOvertimeColor',this.value,'s-clock-ot-color-hex')"></div>
-              <span class="color-swatch-label" id="s-clock-ot-color-hex">#e63946</span>
+              <input type="text" class="color-swatch-label" id="s-clock-ot-color-hex" value="#e63946" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
         </div>
@@ -1075,7 +1076,7 @@
             <label>Period Label Colour</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
               <div class="color-swatch"><input type="color" id="s-period-color" value="#667388" oninput="onStyleColor('periodColor',this.value,'s-period-color-hex')"></div>
-              <span class="color-swatch-label" id="s-period-color-hex">#667388</span>
+              <input type="text" class="color-swatch-label" id="s-period-color-hex" value="#667388" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
           </div>
         </div>
@@ -1483,7 +1484,7 @@ function setSC(inputId, labelId, hex) {
   const swatch = el && el.closest('.color-swatch');
   if (swatch) swatch.style.background = hex;
   const lbl = document.getElementById(labelId);
-  if (lbl) lbl.textContent = hex;
+  if (lbl) lbl.value = hex;
 }
 function syncFontPicker(pickerId, font) {
   const el = document.getElementById(pickerId);
@@ -1579,7 +1580,7 @@ let colorDebounce = {};
 function onColorChange(team, value) {
   document.getElementById(`${team}-color-swatch`).style.background = value;
   document.getElementById(`${team}-color-big`).style.background    = value;
-  document.getElementById(`${team}-color-hex`).textContent         = value;
+  document.getElementById(`${team}-color-hex`).value               = value;
   document.getElementById(`${team}-color-input`).value             = value;
   document.getElementById(`${team}-color-input2`).value            = value;
   clearTimeout(colorDebounce[team]);
@@ -1637,8 +1638,21 @@ function onStyleSlider(key, val, labelId, suffix, isInt) {
   send({ type: 'updateBugStyle', data: { [key]: isInt ? parseInt(val) : parseFloat(val) } });
 }
 
+function onHexChange(el) {
+  const val = el.value.trim();
+  const colorId = el.dataset.colorInput || el.id.replace(/-hex$/, '');
+  const colorEl = document.getElementById(colorId);
+  if (!colorEl) return;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    colorEl.value = val;
+    colorEl.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    el.value = colorEl.value;
+  }
+}
+
 function onStyleColor(key, val, labelId) {
-  document.getElementById(labelId).textContent = val;
+  document.getElementById(labelId).value = val;
   const swatch = document.getElementById(labelId.replace('-hex', '')).closest('.color-swatch');
   if (swatch) swatch.style.background = val;
   clearTimeout(debounce['style_' + key]);
