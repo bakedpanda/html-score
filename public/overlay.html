@@ -582,6 +582,8 @@
 
       const isHome = el.id === 'cp-home-panel';
       el.style.borderRadius = pos === 'bottom' ? `0 0 ${R}px ${R}px` : `${R}px ${R}px 0 0`;
+      el.style.maxWidth = (maxW > 0 ? maxW : 9999) + 'px';
+      el.style.overflow = 'hidden';
       if (isHome) { el.style.left = R + 'px'; el.style.right = ''; }
       else        { el.style.right = R + 'px'; el.style.left = ''; }
     }
