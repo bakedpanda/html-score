@@ -223,7 +223,7 @@
 </head>
 <body>
 
-<div id="bug-wrapper">
+<div id="bug-wrapper" style="opacity:0">
   <div id="bug">
     <!-- Logo bg layers: each covers its full half of the bug, behind everything -->
     <div class="logo-bg-layer" id="home-logo-bg-layer" style="display:none">
@@ -676,6 +676,7 @@
   }
 
   // ── Full state apply ──────────────────────────────────────────────────
+  let _firstState = false;
   function applyState(state, sports) {
     currentState  = state;
     currentSports = sports;
@@ -719,6 +720,11 @@
     applyLogos(state);
     applyClockPanel(state.clock.elapsed, state.clock.running);
     applyCardPanel(state, sports);
+
+    if (!_firstState) {
+      _firstState = true;
+      document.getElementById('bug-wrapper').style.opacity = '';
+    }
   }
 
   // ── WebSocket ─────────────────────────────────────────────────────────
