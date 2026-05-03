@@ -88,6 +88,9 @@
     font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
   }
   .card-body { padding: 14px; }
+  .card.collapsed .card-body { display: none; }
+  .card.collapsed .card-header { border-bottom: none; }
+  .card-collapse-btn { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
 
   /* ── Grid helpers ── */
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -572,9 +575,9 @@
     </div>
 
     <!-- Clock & Period -->
-    <div class="card">
+    <div class="card" id="clock-card">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
-        Clock &amp; Period
+        <span class="card-collapse-btn" onclick="toggleCardCollapse('clock-card')"><span id="clock-card-chevron">▾</span> Clock &amp; Period</span>
         <div class="toggle-item" id="live-toggle-clock" onclick="toggleDisplay('showClock')" style="margin:0">
           <span class="toggle-label" style="font-size:11px">Show Panel</span><div class="toggle-switch"></div>
         </div>
@@ -2153,6 +2156,25 @@ function toast(msg, duration) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), duration || 2500);
 }
+
+function toggleCardCollapse(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  const collapsed = card.classList.toggle('collapsed');
+  const ch = document.getElementById(id + '-chevron');
+  if (ch) ch.textContent = collapsed ? '▸' : '▾';
+  try { localStorage.setItem('card-col-' + id, collapsed ? '1' : ''); } catch(e) {}
+}
+
+// Restore collapsed state
+['clock-card'].forEach(id => {
+  try {
+    if (localStorage.getItem('card-col-' + id)) {
+      const card = document.getElementById(id);
+      if (card) { card.classList.add('collapsed'); const ch = document.getElementById(id + '-chevron'); if (ch) ch.textContent = '▸'; }
+    }
+  } catch(e) {}
+});
 
 connect();
 initOverlayBar();
