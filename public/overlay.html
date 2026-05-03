@@ -723,7 +723,10 @@
 
     if (!_firstState) {
       _firstState = true;
-      document.getElementById('bug-wrapper').style.visibility = '';
+      const wrapper = document.getElementById('bug-wrapper');
+      wrapper.style.transition = 'none';
+      wrapper.style.visibility = '';
+      requestAnimationFrame(() => requestAnimationFrame(() => { wrapper.style.transition = ''; }));
     }
   }
 
