@@ -2160,7 +2160,10 @@ function toast(msg, duration) {
 function toggleCardCollapse(id) {
   const card = document.getElementById(id);
   if (!card) return;
-  const collapsed = card.classList.toggle('collapsed');
+  const body = card.querySelector('.card-body');
+  const collapsed = !card.classList.contains('collapsed');
+  card.classList.toggle('collapsed', collapsed);
+  if (body) body.style.display = collapsed ? 'none' : '';
   const ch = document.getElementById(id + '-chevron');
   if (ch) ch.textContent = collapsed ? '▸' : '▾';
   try { localStorage.setItem('card-col-' + id, collapsed ? '1' : ''); } catch(e) {}
@@ -2171,7 +2174,12 @@ function toggleCardCollapse(id) {
   try {
     if (localStorage.getItem('card-col-' + id)) {
       const card = document.getElementById(id);
-      if (card) { card.classList.add('collapsed'); const ch = document.getElementById(id + '-chevron'); if (ch) ch.textContent = '▸'; }
+      if (!card) return;
+      const body = card.querySelector('.card-body');
+      card.classList.add('collapsed');
+      if (body) body.style.display = 'none';
+      const ch = document.getElementById(id + '-chevron');
+      if (ch) ch.textContent = '▸';
     }
   } catch(e) {}
 });
