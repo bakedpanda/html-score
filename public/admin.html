@@ -229,7 +229,7 @@
   /* ── Score section ── */
   .score-area { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: start; }
   .score-team { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .score-team-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .score-team-label { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
   .score-display {
     font-family: 'Barlow Condensed', sans-serif; font-size: 68px; font-weight: 800;
     color: var(--text); line-height: 1; min-width: 76px; text-align: center;
@@ -270,7 +270,7 @@
   .clock-set-row .field { flex: 1; }
 
   /* ── Cards section ── */
-  .cards-team-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .cards-team-label { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); margin-bottom: 6px; }
   .card-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
 
   /* ── Card timers ── */
@@ -608,8 +608,7 @@
             <div class="card-row">
               <div class="card-pips" id="home-red-pips"></div>
               <div class="card-ctrl">
-                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('home',true)" title="Timed red (sin bin)">+T</button>
-                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('home',false)" title="Straight red (no timer)">+S</button>
+                <button class="card-btn" style="color:var(--red)" onclick="addRedCard('home')">+</button>
                 <button class="card-btn" onclick="send({type:'updateCards',team:'home',cardType:'red',delta:-1})">−</button>
               </div>
               <div class="card-badge" style="background:var(--red)"></div>
@@ -628,8 +627,7 @@
             <div class="card-row">
               <div class="card-pips" id="away-red-pips"></div>
               <div class="card-ctrl">
-                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('away',true)" title="Timed red (sin bin)">+T</button>
-                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('away',false)" title="Straight red (no timer)">+S</button>
+                <button class="card-btn" style="color:var(--red)" onclick="addRedCard('away')">+</button>
                 <button class="card-btn" onclick="send({type:'updateCards',team:'away',cardType:'red',delta:-1})">−</button>
               </div>
               <div class="card-badge" style="background:var(--red)"></div>
@@ -648,11 +646,11 @@
           </div>
           <div class="row-2" style="margin-bottom:10px">
             <div>
-              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="yc-home-label">Home</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px" id="yc-home-label">Home</div>
               <div id="yc-home-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
             <div>
-              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="yc-away-label">Away</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px" id="yc-away-label">Away</div>
               <div id="yc-away-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
           </div>
@@ -665,11 +663,11 @@
           </div>
           <div class="row-2">
             <div>
-              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="rc-home-label">Home</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px" id="rc-home-label">Home</div>
               <div id="rc-home-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
             <div>
-              <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="rc-away-label">Away</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px" id="rc-away-label">Away</div>
               <div id="rc-away-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
           </div>
@@ -1868,9 +1866,9 @@ function fmtCardTimer(s) {
 let rcNextId = 0;
 const rcTimerList = { home: [], away: [] };
 
-function addRedCard(team, timed) {
+function addRedCard(team) {
   send({ type: 'updateCards', team, cardType: 'red', delta: 1 });
-  if (timed) startRcTimer(team);
+  startRcTimer(team);
 }
 
 function startRcTimer(team) {
