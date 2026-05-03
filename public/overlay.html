@@ -508,16 +508,21 @@
       panel.style.background = document._clockBg || bg;
       panel.classList.remove('hidden');
 
-      // Snap to slide-out position/clip, then animate in
       if (!wasVisible) {
+        // Snap to hidden position, then animate in next frame so the browser
+        // commits the snap state before starting the transition
         panel.style.transition = 'none';
         panel.style.transform  = slideOut;
         panel.style.clipPath   = clipOut;
-        panel.getBoundingClientRect(); // force reflow before re-enabling transition
-        panel.style.transition = '';
+        requestAnimationFrame(() => {
+          panel.style.transition = '';
+          panel.style.transform  = 'translateX(0)';
+          panel.style.clipPath   = clipIn;
+        });
+      } else {
+        panel.style.transform = 'translateX(0)';
+        panel.style.clipPath  = clipIn;
       }
-      panel.style.transform = 'translateX(0)';
-      panel.style.clipPath  = clipIn;
     }
 
     // Update content every tick
