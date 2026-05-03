@@ -223,7 +223,7 @@
 </head>
 <body>
 
-<div id="bug-wrapper" style="opacity:0">
+<div id="bug-wrapper" style="visibility:hidden">
   <div id="bug">
     <!-- Logo bg layers: each covers its full half of the bug, behind everything -->
     <div class="logo-bg-layer" id="home-logo-bg-layer" style="display:none">
@@ -723,7 +723,7 @@
 
     if (!_firstState) {
       _firstState = true;
-      document.getElementById('bug-wrapper').style.opacity = '';
+      document.getElementById('bug-wrapper').style.visibility = '';
     }
   }
 
