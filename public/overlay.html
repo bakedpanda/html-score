@@ -507,22 +507,8 @@
 
       panel.style.background = document._clockBg || bg;
       panel.classList.remove('hidden');
-
-      if (!wasVisible) {
-        // Snap to hidden position, then animate in next frame so the browser
-        // commits the snap state before starting the transition
-        panel.style.transition = 'none';
-        panel.style.transform  = slideOut;
-        panel.style.clipPath   = clipOut;
-        requestAnimationFrame(() => {
-          panel.style.transition = '';
-          panel.style.transform  = 'translateX(0)';
-          panel.style.clipPath   = clipIn;
-        });
-      } else {
-        panel.style.transform = 'translateX(0)';
-        panel.style.clipPath  = clipIn;
-      }
+      panel.style.transform = 'translateX(0)';
+      panel.style.clipPath  = clipIn;
     }
 
     // Update content every tick
