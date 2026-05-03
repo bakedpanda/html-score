@@ -65,11 +65,14 @@
     font-size: var(--clock-size, 28px);
     color: var(--clock-color, #a8b5c8);
     line-height: 1;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
     min-width: 5ch;
     text-align: center;
     transition: color 0.3s;
+  }
+  #clock-panel-time .cd {
+    display: inline-block;
+    width: 1ch;
+    text-align: center;
   }
   #clock-panel-time.running  { color: var(--clock-running-color,  #4ade80); }
   #clock-panel-time.overtime { color: var(--clock-overtime-color, #e63946); }
@@ -512,7 +515,8 @@
     // Update content every tick
     const pm = state.periodMins ?? null;
     const ot = isOvertime(elapsed, sport, periodIdx, pm);
-    timeEl.textContent = formatClock(elapsed, sport, periodIdx, pm);
+    timeEl.innerHTML = [...formatClock(elapsed, sport, periodIdx, pm)]
+      .map(ch => `<span class="cd">${ch}</span>`).join('');
     timeEl.className   = ot ? 'overtime' : (running ? 'running' : '');
 
     if (ec.showPeriod !== false) {
