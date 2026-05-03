@@ -2163,7 +2163,10 @@ function toggleCardCollapse(id) {
   const body = card.querySelector('.card-body');
   const collapsed = !card.classList.contains('collapsed');
   card.classList.toggle('collapsed', collapsed);
-  if (body) body.style.display = collapsed ? 'none' : '';
+  if (body) {
+    if (collapsed) { body.dataset.display = body.style.display || getComputedStyle(body).display; body.style.display = 'none'; }
+    else body.style.display = body.dataset.display || '';
+  }
   const ch = document.getElementById(id + '-chevron');
   if (ch) ch.textContent = collapsed ? '▸' : '▾';
   try { localStorage.setItem('card-col-' + id, collapsed ? '1' : ''); } catch(e) {}
