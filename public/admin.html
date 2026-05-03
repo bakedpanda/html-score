@@ -664,7 +664,7 @@
             </div>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim)">Red Card Sin Bin</div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim)">20 Minute Red</div>
             <div style="display:flex;align-items:center;gap:5px">
               <input type="number" id="rc-mins" value="20" min="1" max="60" style="width:48px" title="Sin bin duration in minutes">
               <span style="font-size:12px;color:var(--text-dim)">min</span>
@@ -1914,14 +1914,9 @@ function startRcTimer(team) {
       entry.expired = true;
       clearInterval(entry.interval);
       entry.interval = null;
-      if (dispEl) dispEl.classList.add('rc-timer-expired');
-      const row = document.getElementById(`rc-row-${team}-${id}`);
-      if (row) {
-        const btn = row.querySelector('button');
-        if (btn) { btn.className = 'btn btn-danger btn-sm'; btn.textContent = 'Dismiss'; }
-      }
+      renderRcTimers(team);
       const teamName = state?.[team]?.name || team;
-      toast(`Red card sin bin expired — ${teamName}`, 8000);
+      toast(`20 minute red expired — ${teamName}`, 8000);
     }
   }, 1000);
 }
@@ -1935,11 +1930,13 @@ function renderRcTimers(team) {
     row.className = 'yc-timer-row';
     row.id = `rc-row-${team}-${entry.id}`;
     const dispClass = entry.expired ? 'rc-timer-display rc-timer-expired' : 'rc-timer-display';
-    const btnClass  = entry.expired ? 'btn btn-danger btn-sm' : 'btn btn-ghost btn-sm';
-    const btnLabel  = entry.expired ? 'Dismiss' : 'Dismiss';
+    const removeBtn = entry.expired
+      ? `<button class="btn btn-danger btn-sm" onclick="removeRcCard('${team}',${entry.id})">Remove Card</button>`
+      : '';
     row.innerHTML = `
       <div class="${dispClass}" id="rc-disp-${team}-${entry.id}">${fmtCardTimer(entry.remaining)}</div>
-      <button class="${btnClass}" onclick="dismissRcTimer('${team}',${entry.id})" style="margin-left:auto">${btnLabel}</button>
+      <button class="btn btn-ghost btn-sm" onclick="dismissRcTimer('${team}',${entry.id})" style="margin-left:auto">Dismiss</button>
+      ${removeBtn}
     `;
     container.appendChild(row);
   });
@@ -1952,7 +1949,11 @@ function dismissRcTimer(team, id) {
   if (entry.interval) clearInterval(entry.interval);
   rcTimerList[team].splice(idx, 1);
   renderRcTimers(team);
-  // Card stays on the overlay — only the timer is dismissed
+}
+
+function removeRcCard(team, id) {
+  dismissRcTimer(team, id);
+  send({ type: 'updateCards', team, cardType: 'red', delta: -1 });
 }
 
 // ── Logo colour extraction ─────────────────────────────────────────────
