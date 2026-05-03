@@ -127,7 +127,12 @@
     object-fit: contain;
     transform-origin: center center;
   }
-  /* Fade mask applied dynamically via JS (logoBgFadeStart / logoBgFadeEnd) */
+  .logo-bg-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
 
   /* Team sides */
   .team-side {
@@ -222,9 +227,11 @@
     <!-- Logo bg layers: each covers its full half of the bug, behind everything -->
     <div class="logo-bg-layer" id="home-logo-bg-layer" style="display:none">
       <img id="home-logo-bg" src="" alt="">
+      <div class="logo-bg-vignette" id="home-logo-bg-vignette"></div>
     </div>
     <div class="logo-bg-layer" id="away-logo-bg-layer" style="display:none">
       <img id="away-logo-bg" src="" alt="">
+      <div class="logo-bg-vignette" id="away-logo-bg-vignette"></div>
     </div>
 
     <div class="colour-strip">
@@ -605,6 +612,7 @@
       const wrap    = document.getElementById(`${team}-logo-wrap`);
       const bgLayer = document.getElementById(`${team}-logo-bg-layer`);
       const bgImg   = document.getElementById(`${team}-logo-bg`);
+      const vigEl   = document.getElementById(`${team}-logo-bg-vignette`);
       const circImg = document.getElementById(`${team}-logo`);
 
       const hasLogo = d.showLogos && !!logoSrc;
@@ -620,22 +628,24 @@
       if (mode === 'background') {
         wrap.style.display    = 'none';
         bgLayer.style.display = 'block';
-        bgLayer.style.opacity = opacity;
+        bgLayer.style.opacity = '';
         bgImg.src = logoSrc;
-        bgImg.style.filter = invertFilter;
+        bgImg.style.opacity = opacity;
+        bgImg.style.filter  = invertFilter;
+        bgImg.style.maskImage       = '';
+        bgImg.style.webkitMaskImage = '';
         bgImg.style.transform =
           `translate(${td.logoBgX || 0}%, ${td.logoBgY || 0}%) ` +
           `rotate(${td.logoBgRotation || 0}deg) ` +
           `scale(${td.logoBgScale || 1.5})`;
-        // Directional vignette mask
-        const fs = td.logoBgFadeStart ?? 50;
-        const fe = td.logoBgFadeEnd   ?? 100;
-        const dir = team === 'home' ? 'to right' : 'to left';
-        const mask = fs >= 100
+        // Vignette overlay — separate layer, independent of image position
+        const fs     = td.logoBgFadeStart ?? 50;
+        const fe     = td.logoBgFadeEnd   ?? 100;
+        const dir    = team === 'home' ? 'to right' : 'to left';
+        const bugBg  = document._bugBg || 'rgba(8,11,16,0.92)';
+        vigEl.style.background = fs >= 100
           ? 'none'
-          : `linear-gradient(${dir}, rgba(0,0,0,1) ${fs}%, rgba(0,0,0,0) ${fe}%)`;
-        bgImg.style.maskImage        = mask;
-        bgImg.style.webkitMaskImage  = mask;
+          : `linear-gradient(${dir}, transparent ${fs}%, ${bugBg} ${fe}%)`;
       } else {
         bgLayer.style.display  = 'none';
         wrap.style.display     = 'flex';
