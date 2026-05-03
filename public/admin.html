@@ -550,6 +550,10 @@
             <div class="score-display" id="home-score-display">0</div>
             <div class="score-btns" id="home-score-btns"></div>
             <button class="score-undo" onclick="send({type:'updateScore',team:'home',delta:-1})">− 1</button>
+            <div style="display:flex;gap:5px;align-items:center;margin-top:2px">
+              <input type="number" id="home-score-set" min="0" max="99" value="0" style="width:52px;text-align:center">
+              <button class="btn btn-ghost btn-sm" onclick="setScoreDirect('home')">Set</button>
+            </div>
           </div>
           <div class="score-sep">—</div>
           <div class="score-team">
@@ -557,6 +561,10 @@
             <div class="score-display" id="away-score-display">0</div>
             <div class="score-btns" id="away-score-btns"></div>
             <button class="score-undo" onclick="send({type:'updateScore',team:'away',delta:-1})">− 1</button>
+            <div style="display:flex;gap:5px;align-items:center;margin-top:2px">
+              <input type="number" id="away-score-set" min="0" max="99" value="0" style="width:52px;text-align:center">
+              <button class="btn btn-ghost btn-sm" onclick="setScoreDirect('away')">Set</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1265,6 +1273,8 @@ function applyState() {
   // Scores
   document.getElementById('home-score-display').textContent = state.home.score;
   document.getElementById('away-score-display').textContent = state.away.score;
+  const hsi = document.getElementById('home-score-set'); if (hsi && document.activeElement !== hsi) hsi.value = state.home.score;
+  const asi = document.getElementById('away-score-set'); if (asi && document.activeElement !== asi) asi.value = state.away.score;
   renderScoreButtons('home', sport.scoreButtons || []);
   renderScoreButtons('away', sport.scoreButtons || []);
 
@@ -1589,6 +1599,11 @@ function toggleVisibility() {
 function toggleDisplay(key) {
   if (!state) return;
   send({ type: 'updateDisplay', data: { [key]: !state.display[key] } });
+}
+
+function setScoreDirect(team) {
+  const val = parseInt(document.getElementById(`${team}-score-set`).value);
+  if (!isNaN(val) && val >= 0) send({ type: 'setScore', team, value: val });
 }
 
 function clockStart() { send({ type: 'clockStart' }); }
