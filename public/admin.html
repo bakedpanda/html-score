@@ -706,7 +706,7 @@
     <div class="card">
       <div class="card-header">Bug Container</div>
       <div class="card-body style-section">
-        <div class="style-row cols-3">
+        <div class="style-row cols-2">
           <div class="field">
             <label>Background Colour</label>
             <div class="color-swatch-wrap" style="margin-top:4px">
@@ -715,10 +715,6 @@
               </div>
               <input type="text" class="color-swatch-label" id="s-bug-bg-color-hex" value="#080b10" onfocus="this.select()" onchange="onHexChange(this)">
             </div>
-          </div>
-          <div class="field">
-            <label>Opacity — <span id="s-bug-opacity-val">92%</span></label>
-            <div class="slider-row"><input type="range" id="s-bug-opacity" min="0" max="100" value="92" oninput="onStyleSlider('bugBgOpacity',this.value,'s-bug-opacity-val','%')"></div>
           </div>
           <div class="field">
             <label>Corner Radius — <span id="s-bug-radius-val">10px</span></label>
@@ -1406,7 +1402,6 @@ function syncTeamLogoUI(team, data) {
 function syncStyleUI(bs) {
   // Bug container
   setSC('s-bug-bg-color', 's-bug-bg-color-hex', bs.bugBgColor || '#080b10');
-  setSR('s-bug-opacity',  's-bug-opacity-val',  bs.bugBgOpacity ?? 92, '%');
   setSR('s-bug-radius',   's-bug-radius-val',   bs.bugRadius ?? 10, 'px');
   const gradEnabled = !!bs.bugGradientEnabled;
   setToggle('toggle-bug-gradient', gradEnabled);

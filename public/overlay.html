@@ -47,8 +47,7 @@
     justify-content: center;
     white-space: nowrap;
     overflow: hidden;
-    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-                clip-path 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
   }
   #clock-panel.hidden { pointer-events: none; }
 
@@ -356,8 +355,7 @@
     const R    = (s.bugRadius ?? 10) + 'px';
 
     const [r,g,b] = hexToRgb(s.bugBgColor || '#080b10');
-    const opacity  = (s.bugBgOpacity ?? 92) / 100;
-    const bg       = `rgba(${r},${g},${b},${opacity})`;
+    const bg       = `rgb(${r},${g},${b})`;
 
     bug.style.background = bg;
     document._bugBg  = bg;
@@ -463,9 +461,8 @@
     const side   = ec.side || 'right';
     const visible   = !!state.display?.showClock;
     const wasVisible = _cpPrev.visible;
-    const slideOut  = side === 'right' ? 'translateX(-110%)' : 'translateX(110%)';
-    const clipOut   = side === 'right' ? 'inset(0 0 0 110%)' : 'inset(0 110% 0 0)';
-    const clipIn    = 'inset(0 0 0 0)';
+    // -100%/+100% = exactly one clock-panel width; slides fully behind the opaque bug
+    const slideOut  = side === 'right' ? 'translateX(-100%)' : 'translateX(100%)';
 
     // Always keep bug border-radius in sync with clock visibility/side
     if (bug) {
@@ -481,7 +478,6 @@
     if (!visible) {
       if (stateChanged) {
         panel.style.transform = slideOut;
-        panel.style.clipPath  = clipOut;
       }
       panel.classList.add('hidden');
       return;
@@ -508,7 +504,6 @@
       panel.style.background = document._clockBg || bg;
       panel.classList.remove('hidden');
       panel.style.transform = 'translateX(0)';
-      panel.style.clipPath  = clipIn;
     }
 
     // Update content every tick
