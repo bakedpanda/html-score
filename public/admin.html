@@ -562,7 +562,12 @@
 
     <!-- Clock & Period -->
     <div class="card">
-      <div class="card-header">Clock &amp; Period</div>
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+        Clock &amp; Period
+        <div class="toggle-item" id="live-toggle-clock" onclick="toggleDisplay('showClock')" style="margin:0">
+          <span class="toggle-label" style="font-size:11px">Show Panel</span><div class="toggle-switch"></div>
+        </div>
+      </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
         <div class="clock-display-big" id="clock-display">00:00</div>
         <div class="clock-controls">
@@ -1290,7 +1295,8 @@ function applyState() {
   renderCardPips('away', state.away.yellowCards, state.away.redCards);
 
   // Display toggles
-  setToggle('toggle-clock',  d.showClock);
+  setToggle('toggle-clock',      d.showClock);
+  setToggle('live-toggle-clock', d.showClock);
   setToggle('toggle-cards',  d.showCards);
   setToggle('toggle-logos',  d.showLogos);
 
