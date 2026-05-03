@@ -66,6 +66,9 @@
     color: var(--clock-color, #a8b5c8);
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    min-width: 5ch;
+    text-align: center;
     transition: color 0.3s;
   }
   #clock-panel-time.running  { color: var(--clock-running-color,  #4ade80); }
