@@ -127,7 +127,7 @@
     object-fit: contain;
     transform-origin: center center;
   }
-  .logo-bg-vignette {
+  #bug-gradient {
     position: absolute;
     inset: 0;
     z-index: 1;
@@ -227,12 +227,11 @@
     <!-- Logo bg layers: each covers its full half of the bug, behind everything -->
     <div class="logo-bg-layer" id="home-logo-bg-layer" style="display:none">
       <img id="home-logo-bg" src="" alt="">
-      <div class="logo-bg-vignette" id="home-logo-bg-vignette"></div>
     </div>
     <div class="logo-bg-layer" id="away-logo-bg-layer" style="display:none">
       <img id="away-logo-bg" src="" alt="">
-      <div class="logo-bg-vignette" id="away-logo-bg-vignette"></div>
     </div>
+    <div id="bug-gradient"></div>
 
     <div class="colour-strip">
       <div class="strip-home"></div>
@@ -285,7 +284,7 @@
 </div><!-- /#bug-wrapper -->
 
 <script>
-  const WS_URL = `ws://${location.host}`;
+  const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
   let ws;
   let prevHomeScore = null, prevAwayScore = null;
   let currentState = null, currentSports = null;
@@ -319,8 +318,11 @@
       const dur    = durs[periodIdx] || 0;
       const over   = elapsed - pStart - dur;
       if (over > 0) {
-        const endMin = Math.round((pStart + dur) / 60);
-        return `${endMin}+${Math.ceil(over / 60)}`;
+        const endMin  = Math.round((pStart + dur) / 60);
+        const overSec = Math.floor(over);
+        const mm      = Math.floor(overSec / 60);
+        const ss      = String(overSec % 60).padStart(2, '0');
+        return `${endMin} + ${mm}:${ss}`;
       }
       return fmt(elapsed);
     }
@@ -357,9 +359,30 @@
     const bg       = `rgba(${r},${g},${b},${opacity})`;
 
     bug.style.background = bg;
-    document._bugBg = bg;
-    document._bugR  = R;
+    document._bugBg  = bg;
     document._bugRpx = s.bugRadius ?? 10;
+
+    // Sync border-radius immediately so it's never stale after a style update
+    if (currentState) {
+      const _v = !!currentState.display?.showClock;
+      const _s = currentState.externalClock?.side || 'right';
+      const _R = s.bugRadius ?? 10;
+      bug.style.borderRadius = _v
+        ? (_s === 'right' ? `${_R}px 0 0 ${_R}px` : `0 ${_R}px ${_R}px 0`)
+        : `${_R}px`;
+    }
+
+    // Panel gradient (radial, from centre of panel outward)
+    const grad = document.getElementById('bug-gradient');
+    if (grad) {
+      if (s.bugGradientEnabled) {
+        const gs = s.bugGradientStart ?? 40;
+        const ge = s.bugGradientEnd   ?? 80;
+        grad.style.background = `radial-gradient(ellipse at center, transparent ${gs}%, ${bg} ${ge}%)`;
+      } else {
+        grad.style.background = 'none';
+      }
+    }
 
     bug.querySelector('.colour-strip').style.height =
       s.showStrip !== false ? (s.stripHeight || 4) + 'px' : '0';
@@ -617,7 +640,6 @@
       const wrap    = document.getElementById(`${team}-logo-wrap`);
       const bgLayer = document.getElementById(`${team}-logo-bg-layer`);
       const bgImg   = document.getElementById(`${team}-logo-bg`);
-      const vigEl   = document.getElementById(`${team}-logo-bg-vignette`);
       const circImg = document.getElementById(`${team}-logo`);
 
       const hasLogo = d.showLogos && !!logoSrc;
@@ -643,14 +665,6 @@
           `translate(${td.logoBgX || 0}%, ${td.logoBgY || 0}%) ` +
           `rotate(${td.logoBgRotation || 0}deg) ` +
           `scale(${td.logoBgScale || 1.5})`;
-        // Vignette overlay — separate layer, independent of image position
-        const fs     = td.logoBgFadeStart ?? 50;
-        const fe     = td.logoBgFadeEnd   ?? 100;
-        const dir    = team === 'home' ? 'to right' : 'to left';
-        const bugBg  = document._bugBg || 'rgba(8,11,16,0.92)';
-        vigEl.style.background = fs >= 100
-          ? 'none'
-          : `linear-gradient(${dir}, transparent ${fs}%, ${bugBg} ${fe}%)`;
       } else {
         bgLayer.style.display  = 'none';
         wrap.style.display     = 'flex';

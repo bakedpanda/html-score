@@ -1201,7 +1201,7 @@ let ws;
 let debounce = {};
 
 function connect() {
-  ws = new WebSocket(`ws://${location.host}`);
+  ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
   ws.onopen = () => {
     document.getElementById('status-dot').classList.add('connected');
     document.getElementById('status-text').textContent = 'Connected';

@@ -318,6 +318,10 @@ const DEFAULT_STATE = {
     cardPanelPosition: 'bottom',
     cardPanelScale: 1.0,
     cardPanelBgOpacity: 92,
+    // Panel gradient
+    bugGradientEnabled: false,
+    bugGradientStart: 40,
+    bugGradientEnd: 80,
   },
   externalClock: {
     side: 'right',
