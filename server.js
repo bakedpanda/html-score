@@ -652,6 +652,30 @@ app.post('/api/profiles/import', (req, res) => {
   res.json(profile);
 });
 
+app.put('/api/profiles/:id', (req, res) => {
+  const file = path.join(PROFILES_DIR, `${req.params.id}.json`);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Not found' });
+
+  const profile = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const data = {};
+
+  if (profile.type === 'match' || profile.type === 'full' || profile.type === 'match+style') {
+    data.sport = state.sport;
+    data.home  = { name: state.home.name, shortName: state.home.shortName, color: state.home.color, logo: state.home.logo };
+    data.away  = { name: state.away.name, shortName: state.away.shortName, color: state.away.color, logo: state.away.logo };
+  }
+  if (profile.type === 'style' || profile.type === 'full' || profile.type === 'match+style') {
+    data.bugStyle = { ...state.bugStyle };
+    data.display  = { ...state.display };
+    data.position = { ...state.position };
+    data.scale    = state.scale;
+  }
+
+  profile.data = data;
+  fs.writeFileSync(file, JSON.stringify(profile, null, 2));
+  res.json(profile);
+});
+
 app.delete('/api/profiles/:id', (req, res) => {
   const file = path.join(PROFILES_DIR, `${req.params.id}.json`);
   if (fs.existsSync(file)) fs.unlinkSync(file);

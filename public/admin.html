@@ -2098,6 +2098,7 @@ async function loadProfileList() {
       </div>
       <span class="profile-type-badge ${p.type}">${p.type}</span>
       <button class="btn btn-success btn-sm" onclick="loadProfile('${p.id}')">Load</button>
+      <button class="btn btn-ghost btn-sm" onclick="overwriteProfile('${p.id}', ${JSON.stringify(escHtml(p.name))})">Overwrite</button>
       <button class="btn btn-ghost btn-sm" onclick="exportProfile('${p.id}')">Export</button>
       <button class="btn btn-danger btn-sm" onclick="deleteProfile('${p.id}', this)">Delete</button>
     `;
@@ -2137,6 +2138,12 @@ async function importProfile(input) {
 async function loadProfile(id) {
   const res = await fetch(`/api/profiles/${id}/load`, { method: 'POST' });
   if (res.ok) toast('Profile loaded'); else toast('Load failed');
+}
+
+async function overwriteProfile(id, name) {
+  if (!confirm(`Overwrite "${name}" with the current state?`)) return;
+  const res = await fetch(`/api/profiles/${id}`, { method: 'PUT' });
+  if (res.ok) toast('Profile updated'); else toast('Overwrite failed');
 }
 
 async function deleteProfile(id, btn) {
