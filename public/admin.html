@@ -273,11 +273,13 @@
   .cards-team-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
   .card-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
 
-  /* ── Yellow card timers ── */
+  /* ── Card timers ── */
   .yc-timer-row { display: flex; align-items: center; gap: 7px; padding: 5px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
   .yc-timer-display { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; color: var(--yellow); min-width: 54px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .rc-timer-display { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; color: var(--red);    min-width: 54px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   @keyframes timerFlash { 0%,100%{opacity:1} 50%{opacity:0.15} }
   .yc-timer-expired { animation: timerFlash 0.7s ease-in-out infinite; color: var(--red) !important; }
+  .rc-timer-expired { animation: timerFlash 0.7s ease-in-out infinite; }
   .card-pips { display: flex; gap: 3px; flex: 1; align-items: center; }
   .card-pip { width: 14px; height: 20px; border-radius: 2px; opacity: 0.2; transition: opacity 0.2s; border: 1px solid rgba(255,255,255,0.1); }
   .card-pip.active { opacity: 1; }
@@ -606,7 +608,8 @@
             <div class="card-row">
               <div class="card-pips" id="home-red-pips"></div>
               <div class="card-ctrl">
-                <button class="card-btn" style="color:var(--red)" onclick="send({type:'updateCards',team:'home',cardType:'red',delta:1})">+</button>
+                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('home',true)" title="Timed red (sin bin)">+T</button>
+                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('home',false)" title="Straight red (no timer)">+S</button>
                 <button class="card-btn" onclick="send({type:'updateCards',team:'home',cardType:'red',delta:-1})">−</button>
               </div>
               <div class="card-badge" style="background:var(--red)"></div>
@@ -625,7 +628,8 @@
             <div class="card-row">
               <div class="card-pips" id="away-red-pips"></div>
               <div class="card-ctrl">
-                <button class="card-btn" style="color:var(--red)" onclick="send({type:'updateCards',team:'away',cardType:'red',delta:1})">+</button>
+                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('away',true)" title="Timed red (sin bin)">+T</button>
+                <button class="card-btn" style="color:var(--red);font-size:12px" onclick="addRedCard('away',false)" title="Straight red (no timer)">+S</button>
                 <button class="card-btn" onclick="send({type:'updateCards',team:'away',cardType:'red',delta:-1})">−</button>
               </div>
               <div class="card-badge" style="background:var(--red)"></div>
@@ -652,25 +656,21 @@
               <div id="yc-away-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
           </div>
-          <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Red Card Temporary Dismissal — 20 min</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim)">Red Card Sin Bin</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <input type="number" id="rc-mins" value="20" min="1" max="60" style="width:48px" title="Sin bin duration in minutes">
+              <span style="font-size:12px;color:var(--text-dim)">min</span>
+            </div>
+          </div>
           <div class="row-2">
             <div>
               <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="rc-home-label">Home</div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--red);min-width:60px" id="rc-home-display">20:00</div>
-                <input type="number" id="rc-home-mins" value="20" min="1" max="60" style="width:52px" title="Minutes">
-                <button class="btn btn-ghost btn-sm" id="rc-home-btn" onclick="toggleRcTimer('home')">▶ Start</button>
-                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('rc','home')">↺</button>
-              </div>
+              <div id="rc-home-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
             <div>
               <div style="font-size:12px;color:var(--text-dim);margin-bottom:5px" id="rc-away-label">Away</div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--red);min-width:60px" id="rc-away-display">20:00</div>
-                <input type="number" id="rc-away-mins" value="20" min="1" max="60" style="width:52px" title="Minutes">
-                <button class="btn btn-ghost btn-sm" id="rc-away-btn" onclick="toggleRcTimer('away')">▶ Start</button>
-                <button class="btn btn-ghost btn-sm" onclick="resetCardTimer('rc','away')">↺</button>
-              </div>
+              <div id="rc-away-timers" style="display:flex;flex-direction:column;gap:5px"></div>
             </div>
           </div>
         </div>
@@ -1857,47 +1857,68 @@ function fmtCardTimer(s) {
   return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
 }
 
-// ── Red card timers (single per team) ─────────────────────────────────
-const rcTimers    = { home: null, away: null };
-const rcRemaining = { home: 0,   away: 0   };
+// ── Red card timers (per-card, like yellow) ────────────────────────────
+let rcNextId = 0;
+const rcTimerList = { home: [], away: [] };
 
-function toggleRcTimer(team) {
-  if (rcTimers[team]) {
-    clearInterval(rcTimers[team]);
-    rcTimers[team] = null;
-    document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
-  } else {
-    const mins = parseInt(document.getElementById(`rc-${team}-mins`).value) || 20;
-    rcRemaining[team] = mins * 60;
-    updateRcDisplay(team);
-    document.getElementById(`rc-${team}-btn`).textContent = '⏸ Stop';
-    rcTimers[team] = setInterval(() => {
-      rcRemaining[team]--;
-      updateRcDisplay(team);
-      if (rcRemaining[team] <= 0) {
-        clearInterval(rcTimers[team]);
-        rcTimers[team] = null;
-        document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
-        const teamName = state?.[team]?.name || team;
-        toast(`Red card temporary dismissal expired — ${teamName}`, 8000);
+function addRedCard(team, timed) {
+  send({ type: 'updateCards', team, cardType: 'red', delta: 1 });
+  if (timed) startRcTimer(team);
+}
+
+function startRcTimer(team) {
+  const mins = parseInt(document.getElementById('rc-mins')?.value) || 20;
+  const id   = ++rcNextId;
+  const entry = { id, remaining: mins * 60, interval: null, expired: false };
+  rcTimerList[team].push(entry);
+  renderRcTimers(team);
+  entry.interval = setInterval(() => {
+    entry.remaining--;
+    const dispEl = document.getElementById(`rc-disp-${team}-${id}`);
+    if (dispEl) dispEl.textContent = fmtCardTimer(entry.remaining);
+    if (entry.remaining <= 0 && !entry.expired) {
+      entry.expired = true;
+      clearInterval(entry.interval);
+      entry.interval = null;
+      if (dispEl) dispEl.classList.add('rc-timer-expired');
+      const row = document.getElementById(`rc-row-${team}-${id}`);
+      if (row) {
+        const btn = row.querySelector('button');
+        if (btn) { btn.className = 'btn btn-danger btn-sm'; btn.textContent = 'Dismiss'; }
       }
-    }, 1000);
-  }
+      const teamName = state?.[team]?.name || team;
+      toast(`Red card sin bin expired — ${teamName}`, 8000);
+    }
+  }, 1000);
 }
 
-function updateRcDisplay(team) {
-  const s = rcRemaining[team];
-  document.getElementById(`rc-${team}-display`).textContent = fmtCardTimer(s);
+function renderRcTimers(team) {
+  const container = document.getElementById(`rc-${team}-timers`);
+  if (!container) return;
+  container.innerHTML = '';
+  rcTimerList[team].forEach(entry => {
+    const row = document.createElement('div');
+    row.className = 'yc-timer-row';
+    row.id = `rc-row-${team}-${entry.id}`;
+    const dispClass = entry.expired ? 'rc-timer-display rc-timer-expired' : 'rc-timer-display';
+    const btnClass  = entry.expired ? 'btn btn-danger btn-sm' : 'btn btn-ghost btn-sm';
+    const btnLabel  = entry.expired ? 'Dismiss' : 'Dismiss';
+    row.innerHTML = `
+      <div class="${dispClass}" id="rc-disp-${team}-${entry.id}">${fmtCardTimer(entry.remaining)}</div>
+      <button class="${btnClass}" onclick="dismissRcTimer('${team}',${entry.id})" style="margin-left:auto">${btnLabel}</button>
+    `;
+    container.appendChild(row);
+  });
 }
 
-function resetCardTimer(type, team) {
-  if (type === 'rc') {
-    if (rcTimers[team]) { clearInterval(rcTimers[team]); rcTimers[team] = null; }
-    const mins = parseInt(document.getElementById(`rc-${team}-mins`)?.value) || 20;
-    rcRemaining[team] = mins * 60;
-    updateRcDisplay(team);
-    document.getElementById(`rc-${team}-btn`).textContent = '▶ Start';
-  }
+function dismissRcTimer(team, id) {
+  const idx = rcTimerList[team].findIndex(e => e.id === id);
+  if (idx === -1) return;
+  const entry = rcTimerList[team][idx];
+  if (entry.interval) clearInterval(entry.interval);
+  rcTimerList[team].splice(idx, 1);
+  renderRcTimers(team);
+  // Card stays on the overlay — only the timer is dismissed
 }
 
 // ── Logo colour extraction ─────────────────────────────────────────────
