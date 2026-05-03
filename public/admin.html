@@ -715,6 +715,23 @@
             <div class="slider-row"><input type="range" id="s-bug-radius" min="0" max="30" value="10" oninput="onStyleSlider('bugRadius',this.value,'s-bug-radius-val','px')"></div>
           </div>
         </div>
+        <div class="style-row cols-2" style="margin-top:6px">
+          <div class="toggle-item" id="toggle-bug-gradient" onclick="onStyleToggle('bugGradientEnabled')">
+            <span class="toggle-label">Panel Gradient</span><div class="toggle-switch"></div>
+          </div>
+        </div>
+        <div id="bug-gradient-controls" style="display:none">
+          <div class="style-row cols-2">
+            <div class="field">
+              <label>Gradient Start — <span id="s-bug-grad-start-val">40%</span></label>
+              <div class="slider-row"><input type="range" id="s-bug-grad-start" min="0" max="100" value="40" oninput="onStyleSlider('bugGradientStart',this.value,'s-bug-grad-start-val','%')"></div>
+            </div>
+            <div class="field">
+              <label>Gradient End — <span id="s-bug-grad-end-val">80%</span></label>
+              <div class="slider-row"><input type="range" id="s-bug-grad-end" min="0" max="100" value="80" oninput="onStyleSlider('bugGradientEnd',this.value,'s-bug-grad-end-val','%')"></div>
+            </div>
+          </div>
+        </div>
         <div class="style-row cols-2">
           <div class="toggle-item on" id="toggle-strip" onclick="onStyleToggle('showStrip')">
             <span class="toggle-label">Show Colour Strip</span><div class="toggle-switch"></div>
@@ -893,14 +910,6 @@
                 <label>Rotation — <span id="home-logo-bg-rot-val">0°</span></label>
                 <div class="slider-row"><input type="range" id="home-logo-bg-rot" min="-180" max="180" value="0" oninput="onTeamLogoProp('home','logoBgRotation',this.value,'home-logo-bg-rot-val','°')"></div>
               </div>
-              <div class="field" style="margin-bottom:6px">
-                <label>Vignette Start — <span id="home-logo-bg-fade-start-val">50%</span></label>
-                <div class="slider-row"><input type="range" id="home-logo-bg-fade-start" min="0" max="100" value="50" oninput="onTeamLogoProp('home','logoBgFadeStart',this.value,'home-logo-bg-fade-start-val','%')"></div>
-              </div>
-              <div class="field">
-                <label>Vignette End — <span id="home-logo-bg-fade-end-val">100%</span></label>
-                <div class="slider-row"><input type="range" id="home-logo-bg-fade-end" min="0" max="100" value="100" oninput="onTeamLogoProp('home','logoBgFadeEnd',this.value,'home-logo-bg-fade-end-val','%')"></div>
-              </div>
             </div>
           </div>
           <!-- Away -->
@@ -933,14 +942,6 @@
               <div class="field" style="margin-bottom:6px">
                 <label>Rotation — <span id="away-logo-bg-rot-val">0°</span></label>
                 <div class="slider-row"><input type="range" id="away-logo-bg-rot" min="-180" max="180" value="0" oninput="onTeamLogoProp('away','logoBgRotation',this.value,'away-logo-bg-rot-val','°')"></div>
-              </div>
-              <div class="field" style="margin-bottom:6px">
-                <label>Vignette Start — <span id="away-logo-bg-fade-start-val">50%</span></label>
-                <div class="slider-row"><input type="range" id="away-logo-bg-fade-start" min="0" max="100" value="50" oninput="onTeamLogoProp('away','logoBgFadeStart',this.value,'away-logo-bg-fade-start-val','%')"></div>
-              </div>
-              <div class="field">
-                <label>Vignette End — <span id="away-logo-bg-fade-end-val">100%</span></label>
-                <div class="slider-row"><input type="range" id="away-logo-bg-fade-end" min="0" max="100" value="100" oninput="onTeamLogoProp('away','logoBgFadeEnd',this.value,'away-logo-bg-fade-end-val','%')"></div>
               </div>
             </div>
           </div>
@@ -1390,6 +1391,12 @@ function syncStyleUI(bs) {
   setSC('s-bug-bg-color', 's-bug-bg-color-hex', bs.bugBgColor || '#080b10');
   setSR('s-bug-opacity',  's-bug-opacity-val',  bs.bugBgOpacity ?? 92, '%');
   setSR('s-bug-radius',   's-bug-radius-val',   bs.bugRadius ?? 10, 'px');
+  const gradEnabled = !!bs.bugGradientEnabled;
+  setToggle('toggle-bug-gradient', gradEnabled);
+  const gradCtrl = document.getElementById('bug-gradient-controls');
+  if (gradCtrl) gradCtrl.style.display = gradEnabled ? '' : 'none';
+  setSR('s-bug-grad-start', 's-bug-grad-start-val', bs.bugGradientStart ?? 40, '%');
+  setSR('s-bug-grad-end',   's-bug-grad-end-val',   bs.bugGradientEnd   ?? 80, '%');
   setToggle('toggle-strip', bs.showStrip !== false);
   setSR('s-strip-h', 's-strip-h-val', bs.stripHeight || 4, 'px');
 
