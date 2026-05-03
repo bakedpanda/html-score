@@ -751,6 +751,11 @@
             <div class="slider-row"><input type="range" id="s-strip-h" min="1" max="12" value="4" oninput="onStyleSlider('stripHeight',this.value,'s-strip-h-val','px')"></div>
           </div>
         </div>
+        <div class="style-row cols-2" style="margin-top:6px">
+          <div class="toggle-item" id="toggle-drop-shadow" onclick="onStyleToggle('dropShadow')">
+            <span class="toggle-label">Drop Shadow <small style="color:var(--text-dim);font-weight:400">— disable when keying</small></span><div class="toggle-switch"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1411,6 +1416,7 @@ function syncStyleUI(bs) {
   setSR('s-bug-grad-end',   's-bug-grad-end-val',   bs.bugGradientEnd   ?? 80, '%');
   setToggle('toggle-strip', bs.showStrip !== false);
   setSR('s-strip-h', 's-strip-h-val', bs.stripHeight || 4, 'px');
+  setToggle('toggle-drop-shadow', !!bs.dropShadow);
 
   // Names
   setSC('s-name-color', 's-name-color-hex', bs.nameColor || '#ffffff');

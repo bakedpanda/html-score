@@ -24,7 +24,6 @@
     transform-origin: top left;
     display: inline-block;
     transition: opacity 0.5s ease, transform 0.3s ease;
-    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.55));
   }
   #bug-wrapper.hidden { opacity: 0; pointer-events: none; }
 
@@ -440,6 +439,9 @@
     root.style.setProperty('--card-pip-w', Math.round(10 * (s.cardPanelScale || 1)) + 'px');
     root.style.setProperty('--card-pip-h', Math.round(14 * (s.cardPanelScale || 1)) + 'px');
     document._cardPanelPosition = s.cardPanelPosition || 'bottom';
+
+    document.getElementById('bug-wrapper').style.filter =
+      s.dropShadow ? 'drop-shadow(0 4px 20px rgba(0,0,0,0.55))' : 'none';
   }
 
   // ── Clock panel ───────────────────────────────────────────────────────
